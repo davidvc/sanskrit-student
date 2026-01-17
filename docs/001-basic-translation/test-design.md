@@ -2,13 +2,47 @@
 
 ## Overview
 
-This document describes the testing strategy for both local development and verifying deployed environments.
+This document describes the testing strategy for both local development and verifying deployed environments. Tests use a **mock LLM by default** to ensure fast, deterministic, cost-free testing.
+
+## Core Principle: Mock by Default
+
+All acceptance tests run against a mock LLM implementation that returns stubbed responses. This provides:
+
+- **Fast execution** - No network calls, tests complete in milliseconds
+- **Deterministic results** - Same input always produces same output
+- **No API costs** - No Anthropic API calls during testing
+- **No API key required** - Developers can run tests immediately
+- **CI-friendly** - Tests can run on every commit without rate limits or costs
+
+Real LLM integration is tested manually or via optional integration tests.
+
+## Architecture for Testability
+
+The system uses dependency injection to swap LLM implementations:
+
+```
+┌─────────────────────────────────────────────────────┐
+│              TranslationService                      │
+│                 (interface)                          │
+└──────────────────────┬──────────────────────────────┘
+                       │
+         ┌─────────────┴─────────────┐
+         │                           │
+         ▼                           ▼
+┌─────────────────┐       ┌─────────────────┐
+│ MockTranslation │       │ LlmTranslation  │
+│    Service      │       │    Service      │
+│  (for tests)    │       │ (for production)│
+└─────────────────┘       └─────────────────┘
+```
+
+The test server injects `MockTranslationService`, while production uses `LlmTranslationService`.
 
 ## Test Categories
 
 ### 1. Acceptance Tests (Primary)
 
-Acceptance tests verify the GraphQL API contract. They are the primary means of ensuring the system works correctly.
+Acceptance tests verify the GraphQL API contract using the mock LLM.
 
 **Location:** `tests/acceptance/`
 
@@ -16,76 +50,110 @@ Acceptance tests verify the GraphQL API contract. They are the primary means of 
 - GraphQL query structure and response format
 - Word-by-word breakdown contains required fields
 - Grammatical forms and meanings are present
+- Error handling for invalid input
 
-**Execution:** These tests call the real LLM, so they require an API key and incur costs.
+**Execution:** Fast, no external dependencies.
 
-### 2. Unit Tests (As Needed)
+### 2. Integration Tests (Optional, Manual)
 
-Unit tests are used sparingly for complex logic that benefits from isolation.
+Integration tests verify the real LLM produces valid responses.
 
-**Location:** `tests/unit/` (created as needed)
+**Location:** `tests/integration/`
+
+**When to run:**
+- Before major releases
+- When changing LLM prompts
+- When upgrading Anthropic SDK
+
+**Execution:** Requires `ANTHROPIC_API_KEY`, incurs API costs.
+
+### 3. Unit Tests (As Needed)
+
+Unit tests for complex logic that benefits from isolation.
+
+**Location:** `tests/unit/`
 
 **When to use:**
 - Complex parsing or transformation logic
 - Error handling edge cases
-- Business rules that are difficult to test at acceptance level
+
+## Mock LLM Implementation
+
+### Stubbed Responses
+
+The mock returns pre-defined responses for known test sutras:
+
+```typescript
+// tests/mocks/mock-translation-service.ts
+
+const stubbedResponses: Record<string, TranslationResult> = {
+  'atha yogānuśāsanam': {
+    originalText: 'atha yogānuśāsanam',
+    words: [
+      {
+        word: 'atha',
+        grammaticalForm: 'indeclinable particle',
+        meanings: ['now', 'thus', 'hence']
+      },
+      {
+        word: 'yogānuśāsanam',
+        grammaticalForm: 'nominative singular neuter compound',
+        meanings: ['instruction on yoga', 'teaching of yoga']
+      }
+    ]
+  }
+  // Additional stubbed sutras...
+};
+```
+
+### Handling Unknown Input
+
+For sutras not in the stub list, the mock returns a generic valid response structure. This allows testing with arbitrary input while maintaining response format consistency.
 
 ## Local Testing
 
 ### Prerequisites
 
 1. **Node.js** (v18 or later)
-2. **Anthropic API Key** set as environment variable
+2. No API key required for standard tests
 
 ### Environment Setup
 
 ```bash
 # Install dependencies
 npm install
-
-# Set API key (required for acceptance tests)
-export ANTHROPIC_API_KEY="your-api-key-here"
 ```
 
 ### Running Tests
 
 ```bash
-# Run all tests once
+# Run all tests (uses mock LLM)
 npm test
 
-# Run tests in watch mode (during development)
+# Run tests in watch mode
 npm run test:watch
 
 # Run specific test file
 npx vitest run tests/acceptance/word-translation.test.ts
 ```
 
-### Test Output
+### Running Integration Tests (Optional)
 
-Tests use vitest and output results to the console. A failing test will show:
-- The assertion that failed
-- Expected vs actual values
-- Stack trace pointing to the failing line
+```bash
+# Set API key for real LLM tests
+export ANTHROPIC_API_KEY="your-api-key-here"
+
+# Run integration tests
+npm run test:integration
+```
 
 ## Testing Deployed Service
 
 ### Smoke Tests
 
-After deployment, run smoke tests to verify the service is operational.
+After deployment, verify the service is operational with quick checks.
 
-**Approach:** Use the same acceptance tests but point them at the deployed endpoint.
-
-```bash
-# Set the deployed endpoint URL
-export GRAPHQL_ENDPOINT="https://your-app.vercel.app/graphql"
-
-# Run smoke tests
-npm run test:smoke
-```
-
-### Manual Verification
-
-For quick verification, use curl or a GraphQL client:
+**Manual verification using curl:**
 
 ```bash
 curl -X POST https://your-app.vercel.app/graphql \
@@ -97,13 +165,13 @@ curl -X POST https://your-app.vercel.app/graphql \
 
 ### Health Check Endpoint
 
-The deployed service should expose a health check endpoint for monitoring:
+The deployed service exposes a health check:
 
 ```
 GET /health
 ```
 
-Returns `200 OK` with `{"status": "healthy"}` when the service is operational.
+Returns `200 OK` with `{"status": "healthy"}` when operational.
 
 ## Test Configuration
 
@@ -111,51 +179,46 @@ Returns `200 OK` with `{"status": "healthy"}` when the service is operational.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Yes (for acceptance tests) | API key for Claude |
-| `GRAPHQL_ENDPOINT` | No | Override endpoint for deployed testing (defaults to local test server) |
+| `ANTHROPIC_API_KEY` | Only for integration tests | API key for Claude |
+| `GRAPHQL_ENDPOINT` | No | Override endpoint for deployed testing |
 
 ### vitest.config.ts
 
-The test configuration includes:
-- 30-second timeout for LLM calls
 - Node environment
 - Test files in `tests/**/*.test.ts`
+- Excludes `tests/integration/` from default test run
 
-## CI/CD Considerations
+## Standard Test Data
 
-### Cost Management
+### Test Sutras with Stubbed Responses
 
-Since acceptance tests call the real LLM:
-- Run acceptance tests only on PR merge (not every commit)
-- Consider a mock LLM implementation for rapid iteration on non-LLM code
-- Monitor API usage and costs
+| Sutra | Source | Mock Response Summary |
+|-------|--------|----------------------|
+| `atha yogānuśāsanam` | Yoga Sutras 1.1 | 2 words: atha (particle), yogānuśāsanam (compound) |
+| `yogaś citta-vṛtti-nirodhaḥ` | Yoga Sutras 1.2 | 4 words with sandhi handling |
+| `tadā draṣṭuḥ svarūpe 'vasthānam` | Yoga Sutras 1.3 | 4 words |
 
-### Future: Mock Implementation
+### Adding New Test Cases
 
-For faster CI feedback, we may add a `MockTranslationService` that returns canned responses. This would allow:
-- Fast tests for GraphQL schema validation
-- Testing error handling paths
-- Running tests without API key
+1. Add the sutra and expected response to `tests/mocks/stubbed-responses.ts`
+2. Write the acceptance test using that sutra
+3. The mock will return the stubbed response
 
-The acceptance tests would then have two modes:
-- `npm test` - Uses mock (fast, no API key needed)
-- `npm run test:integration` - Uses real LLM (slower, requires API key)
+## CI/CD
 
-## Test Data
+### Default Pipeline
 
-### Standard Test Sutras
+```yaml
+- npm install
+- npm test          # Runs acceptance tests with mock (fast, free)
+- npm run build     # Type check and build
+```
 
-Use these sutras for consistent testing:
+### Optional: Periodic Integration Tests
 
-| Sutra | Source | Notes |
-|-------|--------|-------|
-| `atha yogānuśāsanam` | Yoga Sutras 1.1 | Simple, 2 words |
-| `yogaś citta-vṛtti-nirodhaḥ` | Yoga Sutras 1.2 | Contains sandhi |
-| `tadā draṣṭuḥ svarūpe 'vasthānam` | Yoga Sutras 1.3 | Multiple words with apostrophe |
+Run integration tests on a schedule (e.g., weekly) or before releases:
 
-### Expected Behavior
-
-For `atha yogānuśāsanam`, expect:
-- 2 word entries (or 3 if compound is split)
-- Each word has non-empty `grammaticalForm`
-- Each word has at least one meaning
+```yaml
+# Scheduled job with API key secret
+- npm run test:integration
+```
