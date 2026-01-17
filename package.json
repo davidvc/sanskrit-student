@@ -1,0 +1,22 @@
+{
+  "name": "sanskrit-student",
+  "version": "0.1.0",
+  "description": "Sanskrit sutra translation service with word-by-word breakdowns",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "tsc",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.25.0",
+    "graphql": "^16.8.0",
+    "graphql-yoga": "^5.1.0"
+  }
+}
