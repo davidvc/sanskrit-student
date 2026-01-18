@@ -163,15 +163,14 @@ A small number of integration tests verify correct integration with the real LLM
 - Requires `ANTHROPIC_API_KEY`
 - Kept minimal to control costs (only a few tests)
 
-### 3. Unit Tests (As Needed)
+### 3. DO NOT WRITE UNIT TESTS UNLESS I REQUEST THEM
 
-Unit tests for complex logic that benefits from isolation.
+Unit tests for complex logic that benefits from isolation. These are ON REQUEST ONLY
 
 **Location:** `tests/unit/`
 
 **When to use:**
-- Complex parsing or transformation logic in TranslationService
-- Error handling edge cases
+- WHEN REQUESTED ONLY
 
 ## Mock LLM Implementation
 
