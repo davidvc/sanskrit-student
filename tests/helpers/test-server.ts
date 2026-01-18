@@ -1,4 +1,4 @@
-import { createServer } from '../../src/server';
+import { createServer, createTestConfig } from '../../src/server';
 
 /**
  * Response type from GraphQL query execution.
@@ -26,11 +26,14 @@ export interface TestServer {
 
 /**
  * Creates a test server instance for acceptance testing.
- * The server wraps the actual GraphQL yoga server and provides
- * a simple interface for executing queries.
+ *
+ * The server is configured with MockLlmClient via createTestConfig(),
+ * providing stubbed responses for known Sanskrit sutras without
+ * requiring external LLM dependencies.
  */
 export function createTestServer(): TestServer {
-  const yoga = createServer();
+  const config = createTestConfig();
+  const yoga = createServer(config);
 
   return {
     async executeQuery<T = unknown>(options: QueryOptions): Promise<GraphQLResponse<T>> {
