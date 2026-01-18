@@ -18,7 +18,7 @@ const EXEC_OPTIONS: ExecSyncOptionsWithStringEncoding = {
  * @throws Error if CLI exits with non-zero status
  */
 function runCli(args: string): string {
-  return execSync(`npm run translate -- ${args}`, EXEC_OPTIONS);
+  return execSync(`./translate ${args}`, EXEC_OPTIONS);
 }
 
 /**
@@ -29,7 +29,7 @@ function runCli(args: string): string {
  */
 function runCliSafe(args: string): { stdout: string; stderr: string; success: boolean } {
   try {
-    const stdout = execSync(`npm run translate -- ${args}`, {
+    const stdout = execSync(`./translate ${args}`, {
       ...EXEC_OPTIONS,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
@@ -84,13 +84,8 @@ describe('CLI acceptance tests', () => {
     it('should return valid JSON output', () => {
       const output = runCli('--mock "atha yoganuasanam"');
 
-      // Extract JSON from npm output (skip npm run lines)
-      const lines = output.trim().split('\n');
-      const jsonLine = lines.find(line => line.startsWith('{'));
-      expect(jsonLine).toBeDefined();
-
       // Should parse as valid JSON
-      const result = JSON.parse(jsonLine!);
+      const result = JSON.parse(output.trim());
       expect(result).toBeDefined();
     });
   });
@@ -107,13 +102,7 @@ describe('CLI acceptance tests', () => {
   describe('Output structure validation', () => {
     it('should return JSON matching TranslationResult type', () => {
       const output = runCli('--mock "atha yoganuasanam"');
-
-      // Extract JSON from npm output
-      const lines = output.trim().split('\n');
-      const jsonLine = lines.find(line => line.startsWith('{'));
-      expect(jsonLine).toBeDefined();
-
-      const result = JSON.parse(jsonLine!);
+      const result = JSON.parse(output.trim());
 
       // Verify structure matches TranslationResult
       expect(isTranslationResult(result)).toBe(true);
