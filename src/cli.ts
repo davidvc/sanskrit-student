@@ -42,6 +42,7 @@ async function main(): Promise<void> {
 
   const result = await service.translate(sutra);
   console.log(JSON.stringify(result));
+  process.exit(0);
 }
 
 main().catch((error: Error) => {
