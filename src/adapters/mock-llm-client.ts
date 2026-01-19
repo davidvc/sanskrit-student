@@ -9,12 +9,10 @@ const STUBBED_RESPONSES: Record<string, WordEntry[]> = {
   'atha yoganuasanam': [
     {
       word: 'atha',
-      grammaticalForm: 'indeclinable particle',
       meanings: ['now', 'here begins', 'auspicious beginning'],
     },
     {
       word: 'yoganuasanam',
-      grammaticalForm: 'compound noun, nominative, singular, neuter',
       meanings: [
         'instruction on yoga',
         'teaching of yoga',
@@ -31,7 +29,6 @@ const STUBBED_RESPONSES: Record<string, WordEntry[]> = {
 const DEFAULT_RESPONSE: WordEntry[] = [
   {
     word: 'unknown',
-    grammaticalForm: 'noun, nominative, singular',
     meanings: ['word not in stubbed data'],
   },
 ];

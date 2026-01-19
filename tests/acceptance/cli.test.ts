@@ -52,7 +52,6 @@ function isWordEntry(value: unknown): value is WordEntry {
   const obj = value as Record<string, unknown>;
   return (
     typeof obj.word === 'string' &&
-    typeof obj.grammaticalForm === 'string' &&
     Array.isArray(obj.meanings) &&
     obj.meanings.every((m: unknown) => typeof m === 'string')
   );
@@ -115,8 +114,6 @@ describe('CLI acceptance tests', () => {
       for (const word of result.words) {
         expect(word.word).toBeDefined();
         expect(word.word.length).toBeGreaterThan(0);
-        expect(word.grammaticalForm).toBeDefined();
-        expect(word.grammaticalForm.length).toBeGreaterThan(0);
         expect(word.meanings).toBeInstanceOf(Array);
         expect(word.meanings.length).toBeGreaterThan(0);
       }

@@ -6,9 +6,6 @@ export interface WordEntry {
   /** The Sanskrit word in IAST transliteration */
   word: string;
 
-  /** The grammatical form (e.g., "noun, nominative, singular") */
-  grammaticalForm: string;
-
   /** One or more English meanings for this word */
   meanings: string[];
 }
@@ -21,6 +18,6 @@ export interface TranslationResult {
   /** The original sutra text that was submitted */
   originalText: string;
 
-  /** Word-by-word breakdown with grammatical analysis */
+  /** Word-by-word breakdown with meanings */
   words: WordEntry[];
 }

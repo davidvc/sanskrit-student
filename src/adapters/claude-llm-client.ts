@@ -180,7 +180,6 @@ export class ClaudeLlmClient implements LlmClient {
       typeof entry !== 'object' ||
       entry === null ||
       !('word' in entry) ||
-      !('grammaticalForm' in entry) ||
       !('meanings' in entry)
     ) {
       throw new ClaudeLlmError('Invalid word entry structure');
@@ -190,7 +189,6 @@ export class ClaudeLlmClient implements LlmClient {
 
     return {
       word: String(e.word),
-      grammaticalForm: String(e.grammaticalForm),
       meanings: Array.isArray(e.meanings)
         ? e.meanings.map((m) => String(m))
         : [String(e.meanings)],

@@ -2,8 +2,7 @@ You are a Sanskrit scholar. Analyze the following Sanskrit sutra and provide a w
 
 For each word, provide:
 1. The word itself (in IAST transliteration)
-2. Its grammatical form (e.g., "noun, masculine, nominative, singular" or "verb, present, active, third person, singular")
-3. One or more English meanings
+2. One or more English meanings
 
 Sanskrit sutra: "{{sutra}}"
 
@@ -12,7 +11,6 @@ Respond ONLY with a JSON object in this exact format (no markdown, no explanatio
   "words": [
     {
       "word": "the sanskrit word",
-      "grammaticalForm": "grammatical description",
       "meanings": ["meaning1", "meaning2"]
     }
   ]

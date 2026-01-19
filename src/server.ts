@@ -56,7 +56,6 @@ export function createServer(config: ServerConfig) {
 
       type WordEntry {
         word: String!
-        grammaticalForm: String!
         meanings: [String!]!
       }
     `,
