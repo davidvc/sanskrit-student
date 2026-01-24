@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { createTestServer } from '../helpers/test-server';
+import { TRANSLATE_SUTRA_QUERY } from '../helpers/graphql-queries';
+import {
+  expectValidWord,
+  expectValidMeanings,
+  expectValidWordBreakdown,
+} from '../helpers/assertions';
 import { TranslationResult } from '../../src/domain/types';
 
 /**
@@ -9,57 +15,66 @@ interface TranslateSutraResponse {
   translateSutra: TranslationResult;
 }
 
-/**
- * Acceptance test for the first Gherkin scenario:
- *
- * Given I have a Sanskrit sutra in IAST transliteration
- * When I submit the sutra for translation
- * Then I should see each word from the sutra listed separately
- * And each word should have one or more meanings provided
- */
-describe('Display word meanings for a simple sutra', () => {
-  it('should return word-by-word breakdown with meanings', async () => {
-    // Given I have a Sanskrit sutra in IAST transliteration
-    const sutra = 'atha yoganuasanam';
-
-    // When I submit the sutra for translation
+describe('Feature: Sanskrit Sutra Word-by-Word Translation', () => {
+  describe('Scenario: Display word meanings for a simple sutra', () => {
     const server = createTestServer();
-    const response = await server.executeQuery<TranslateSutraResponse>({
-      query: `
-        query TranslateSutra($sutra: String!) {
-          translateSutra(sutra: $sutra) {
-            originalText
-            words {
-              word
-              meanings
-            }
-          }
-        }
-      `,
-      variables: { sutra },
+
+    /**
+     * Setup: Submit a Sanskrit sutra for translation.
+     *
+     * Given I have a Sanskrit sutra in IAST transliteration
+     * When I submit the sutra for translation
+     */
+    it('should accept a sutra and return a translation result', async () => {
+      const sutra = 'atha yoganuasanam';
+
+      const response = await server.executeQuery<TranslateSutraResponse>({
+        query: TRANSLATE_SUTRA_QUERY,
+        variables: { sutra },
+      });
+
+      expect(response.errors).toBeUndefined();
+      expect(response.data?.translateSutra).toBeDefined();
+
+      const result = response.data!.translateSutra;
+      expect(result.originalText).toBe(sutra);
     });
 
-    // Then I should see each word from the sutra listed separately
-    expect(response.errors).toBeUndefined();
-    expect(response.data?.translateSutra).toBeDefined();
+    /**
+     * Then I should see each word from the sutra listed separately
+     */
+    it('should see each word from the sutra listed separately', async () => {
+      const sutra = 'atha yoganuasanam';
 
-    const result = response.data!.translateSutra;
-    expect(result.originalText).toBe(sutra);
-    expect(result.words).toBeInstanceOf(Array);
-    expect(result.words.length).toBeGreaterThan(0);
+      const response = await server.executeQuery<TranslateSutraResponse>({
+        query: TRANSLATE_SUTRA_QUERY,
+        variables: { sutra },
+      });
 
-    // And each word should have one or more meanings provided
-    for (const wordEntry of result.words) {
-      expect(wordEntry.word).toBeDefined();
-      expect(typeof wordEntry.word).toBe('string');
-      expect(wordEntry.word.length).toBeGreaterThan(0);
+      const result = response.data!.translateSutra;
+      expectValidWordBreakdown(result.words);
 
-      expect(wordEntry.meanings).toBeInstanceOf(Array);
-      expect(wordEntry.meanings.length).toBeGreaterThan(0);
-      for (const meaning of wordEntry.meanings) {
-        expect(typeof meaning).toBe('string');
-        expect(meaning.length).toBeGreaterThan(0);
+      for (const wordEntry of result.words) {
+        expectValidWord(wordEntry);
       }
-    }
+    });
+
+    /**
+     * And each word should have one or more meanings provided
+     */
+    it('should have one or more meanings provided for each word', async () => {
+      const sutra = 'atha yoganuasanam';
+
+      const response = await server.executeQuery<TranslateSutraResponse>({
+        query: TRANSLATE_SUTRA_QUERY,
+        variables: { sutra },
+      });
+
+      const result = response.data!.translateSutra;
+
+      for (const wordEntry of result.words) {
+        expectValidMeanings(wordEntry);
+      }
+    });
   });
 });
