@@ -30,31 +30,39 @@ export class OcrTranslationService {
     let handle;
 
     try {
-      // Step 1: Store uploaded image
+      // Step 1: Validate image format
+      const supportedFormats = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/tiff'];
+      if (!supportedFormats.includes(upload.mimetype.toLowerCase())) {
+        throw new Error(
+          `Unsupported image format: ${upload.mimetype}. Supported formats: PNG, JPG, JPEG, WEBP, TIFF`
+        );
+      }
+
+      // Step 2: Store uploaded image
       handle = await this.imageStorage.store(upload);
 
-      // Step 2: Retrieve image buffer
+      // Step 3: Retrieve image buffer
       const buffer = await this.imageStorage.retrieve(handle);
 
-      // Step 3: Set filename context for MockOcrEngine (testing only)
+      // Step 4: Set filename context for MockOcrEngine (testing only)
       if (this.ocrEngine instanceof MockOcrEngine) {
         this.ocrEngine.setFilename(upload.filename);
       }
 
-      // Step 4: OCR extraction
+      // Step 5: OCR extraction
       const ocrResult = await this.ocrEngine.extractText(buffer, {
         languageHints: ['hi', 'sa'], // Hindi/Sanskrit for Devanagari
       });
 
-      // Step 5: Validate OCR result
+      // Step 6: Validate OCR result
       if (ocrResult.confidence < 0.1) {
         throw new Error('No readable text detected in image');
       }
 
-      // Step 6: Translate extracted text via existing pipeline
+      // Step 7: Translate extracted text via existing pipeline
       const translation = await this.translationService.translate(ocrResult.text);
 
-      // Step 7: Augment result with OCR metadata
+      // Step 8: Augment result with OCR metadata
       const warnings: string[] = [];
       if (ocrResult.confidence < 0.7) {
         warnings.push('Low OCR confidence - please verify extracted text');
@@ -73,7 +81,7 @@ export class OcrTranslationService {
 
       return result;
     } finally {
-      // Step 8: Always cleanup stored image
+      // Step 9: Always cleanup stored image
       if (handle) {
         await this.imageStorage.cleanup(handle).catch(console.error);
       }
