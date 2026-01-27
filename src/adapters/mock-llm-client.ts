@@ -103,6 +103,35 @@ const STUBBED_RESPONSES: Record<string, StubbedTranslation> = {
       'The universal vibration',
     ],
   },
+  'asato ma sadgamaya\ntamaso ma jyotirgamaya': {
+    words: [
+      {
+        word: 'asato',
+        meanings: ['from untruth', 'from non-being'],
+      },
+      {
+        word: 'mā',
+        meanings: ['me', 'to me'],
+      },
+      {
+        word: 'sadgamaya',
+        meanings: ['lead to truth', 'guide to being'],
+      },
+      {
+        word: 'tamaso',
+        meanings: ['from darkness'],
+      },
+      {
+        word: 'jyotirgamaya',
+        meanings: ['lead to light'],
+      },
+    ],
+    alternativeTranslations: [
+      'From untruth lead me to truth, from darkness lead me to light',
+      'Lead me from the unreal to the real, from darkness to light',
+      'Guide me from falsehood to truth, from ignorance to illumination',
+    ],
+  },
 };
 
 /**

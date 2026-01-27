@@ -61,6 +61,13 @@ export class MockOcrEngine implements OcrEngine {
       confidence: 0.05,
       language: 'en',
     });
+
+    // AC11: Multi-line text with line breaks
+    this.filenameResponses.set('multiline-sloka.png', {
+      text: 'असतो मा सद्गमय\nतमसो मा ज्योतिर्गमय',
+      confidence: 0.93,
+      language: 'sa',
+    });
   }
 
   /**
