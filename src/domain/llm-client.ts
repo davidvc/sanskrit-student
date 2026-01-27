@@ -9,6 +9,9 @@ import { WordEntry } from './types';
 export interface LlmTranslationResponse {
   /** Word-by-word breakdown with grammatical analysis */
   words: WordEntry[];
+
+  /** Alternative translations of the complete sutra (up to 3) */
+  alternativeTranslations?: string[];
 }
 
 /**

@@ -33,6 +33,7 @@ export class LlmTranslationService implements TranslationService {
       originalText: sutra,
       iastText: sutra,
       words: llmResponse.words,
+      alternativeTranslations: llmResponse.alternativeTranslations,
     };
   }
 }

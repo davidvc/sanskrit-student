@@ -2,7 +2,9 @@ You are a Sanskrit scholar. Analyze the following Sanskrit sutra and provide a w
 
 For each word, provide:
 1. The word itself (in IAST transliteration)
-2. One or more English meanings
+2. Up to 3 alternative English meanings
+
+Additionally, provide up to 3 alternative translations of the complete sutra.
 
 Sanskrit sutra: "{{sutra}}"
 
@@ -11,7 +13,12 @@ Respond ONLY with a JSON object in this exact format (no markdown, no explanatio
   "words": [
     {
       "word": "the sanskrit word",
-      "meanings": ["meaning1", "meaning2"]
+      "meanings": ["meaning1", "meaning2", "meaning3"]
     }
+  ],
+  "alternativeTranslations": [
+    "First complete translation of the sutra",
+    "Second alternative translation",
+    "Third alternative translation"
   ]
 }

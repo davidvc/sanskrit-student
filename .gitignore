@@ -3,9 +3,3 @@ dist/
 *.log
 .env
 .env.local
-
-# Gas Town (added by gt)
-.runtime/
-.claude/
-.logs/
-.beads/

@@ -70,6 +70,7 @@ export function createServer(config: ServerConfig) {
         originalText: String!
         iastText: String!
         words: [WordEntry!]!
+        alternativeTranslations: [String!]
       }
 
       type WordEntry {

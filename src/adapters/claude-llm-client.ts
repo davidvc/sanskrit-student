@@ -155,6 +155,7 @@ export class ClaudeLlmClient implements LlmClient {
 
     return {
       words: parsed.words.map((w) => this.validateWordEntry(w)),
+      alternativeTranslations: this.extractAlternativeTranslations(parsed),
     };
   }
 
@@ -193,5 +194,25 @@ export class ClaudeLlmClient implements LlmClient {
         ? e.meanings.map((m) => String(m))
         : [String(e.meanings)],
     };
+  }
+
+  /**
+   * Extracts alternative translations from the response, if present.
+   */
+  private extractAlternativeTranslations(parsed: unknown): string[] | undefined {
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      'alternativeTranslations' in parsed
+    ) {
+      const obj = parsed as Record<string, unknown>;
+      const alternatives = obj.alternativeTranslations;
+
+      if (Array.isArray(alternatives)) {
+        return alternatives.map((a) => String(a));
+      }
+    }
+
+    return undefined;
   }
 }

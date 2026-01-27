@@ -2,36 +2,57 @@ import { LlmClient, LlmTranslationResponse } from '../domain/llm-client';
 import { WordEntry } from '../domain/types';
 
 /**
+ * Stubbed translation data including alternative sutra translations.
+ */
+interface StubbedTranslation {
+  words: WordEntry[];
+  alternativeTranslations: string[];
+}
+
+/**
  * Stubbed response data for known Sanskrit sutras.
  * Used for testing without external LLM dependencies.
  */
-const STUBBED_RESPONSES: Record<string, WordEntry[]> = {
-  'atha yoganusasanam': [
-    {
-      word: 'atha',
-      meanings: ['now', 'here begins', 'auspicious beginning'],
-    },
-    {
-      word: 'yogānuśāsanam',
-      meanings: [
-        'instruction on yoga',
-        'teaching of yoga',
-        'discipline of yoga',
-      ],
-    },
-  ],
+const STUBBED_RESPONSES: Record<string, StubbedTranslation> = {
+  'atha yoganusasanam': {
+    words: [
+      {
+        word: 'atha',
+        meanings: ['now', 'here begins', 'auspicious beginning'],
+      },
+      {
+        word: 'yogānuśāsanam',
+        meanings: [
+          'instruction on yoga',
+          'teaching of yoga',
+          'discipline of yoga',
+        ],
+      },
+    ],
+    alternativeTranslations: [
+      'Now, the teaching of yoga',
+      'Here begins the instruction on yoga',
+      'Now begins the discipline of union',
+    ],
+  },
 };
 
 /**
  * Default response for unknown sutras.
  * Provides a valid structure for any input text.
  */
-const DEFAULT_RESPONSE: WordEntry[] = [
-  {
-    word: 'unknown',
-    meanings: ['word not in stubbed data'],
-  },
-];
+const DEFAULT_RESPONSE: StubbedTranslation = {
+  words: [
+    {
+      word: 'unknown',
+      meanings: ['word not in stubbed data'],
+    },
+  ],
+  alternativeTranslations: [
+    'Translation not available',
+    'Unknown sutra',
+  ],
+};
 
 /**
  * Mock implementation of LlmClient for testing purposes.
@@ -50,9 +71,12 @@ export class MockLlmClient implements LlmClient {
    */
   async translateSutra(sutra: string): Promise<LlmTranslationResponse> {
     const normalizedSutra = this.normalizeSutra(sutra);
-    const words = STUBBED_RESPONSES[normalizedSutra] ?? DEFAULT_RESPONSE;
+    const translation = STUBBED_RESPONSES[normalizedSutra] ?? DEFAULT_RESPONSE;
 
-    return { words };
+    return {
+      words: translation.words,
+      alternativeTranslations: translation.alternativeTranslations,
+    };
   }
 
   /**

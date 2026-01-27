@@ -23,6 +23,9 @@ export interface TranslationResult {
 
   /** Word-by-word breakdown with meanings */
   words: WordEntry[];
+
+  /** Alternative translations of the complete sutra (up to 3) */
+  alternativeTranslations?: string[];
 }
 
 /**

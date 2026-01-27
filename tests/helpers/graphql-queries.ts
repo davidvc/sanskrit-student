@@ -16,6 +16,7 @@ export const TRANSLATE_SUTRA_QUERY = `
         word
         meanings
       }
+      alternativeTranslations
     }
   }
 `;
