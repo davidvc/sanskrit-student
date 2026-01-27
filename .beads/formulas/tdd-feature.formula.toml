@@ -1,0 +1,193 @@
+description = "TDD Feature Development - Acceptance criteria first, design second, test-driven implementation third. Human review gates at criteria and design phases."
+formula = "tdd-feature"
+type = "workflow"
+version = 1
+
+[[steps]]
+id = "criteria"
+title = "Write acceptance criteria for {{feature}}"
+description = """Write acceptance criteria using Gherkin syntax (Given/When/Then).
+
+Cover:
+- Happy path scenarios
+- Edge cases
+- Error conditions
+- User-facing behavior (not implementation details)
+
+Output: A Gherkin feature file or markdown with scenarios."""
+
+[[steps]]
+id = "criteria-review"
+title = "Review acceptance criteria"
+needs = ["criteria"]
+description = """HUMAN REVIEW GATE: Present criteria to human for review.
+
+Checklist:
+- Are scenarios complete?
+- Is the language clear and unambiguous?
+- Are edge cases covered?
+- Any missing scenarios?
+
+Wait for human approval before proceeding.
+
+AFTER APPROVAL: Commit acceptance criteria artifacts
+-----------------------------------------------------
+Once human approves, commit the acceptance criteria documents:
+
+  git add docs/features/
+  git add .beads/work-docs/
+  git commit -m "Acceptance criteria approved for {{feature}}
+
+  - Feature file with all scenarios
+  - Summary and review checklist
+
+  Co-Authored-By: Claude (hubgpt-chat-completions-claude-sonnet-4-5) <noreply@anthropic.com>"
+
+This preserves the approved criteria in version control."""
+
+[[steps]]
+id = "design"
+title = "Write high-level design for {{feature}}"
+needs = ["criteria-review"]
+description = """Create high-level design based on approved acceptance criteria.
+
+Include:
+- Architecture overview (how it fits into existing system)
+- Key components/modules involved
+- Data flow
+- API changes (if any)
+- Dependencies
+- Risks and mitigations
+- Implementation plan using RED-GREEN-REFACTOR TDD cycles
+
+Keep it high-level - implementation details come during TDD.
+
+CRITICAL: Design must include TDD implementation plan:
+- Identify which acceptance criteria map to which tests
+- Plan RED-GREEN-REFACTOR cycle for each criterion
+- Tests written FIRST, then code to pass them
+- Each criterion = one complete TDD cycle"""
+
+[[steps]]
+id = "design-review"
+title = "Review high-level design"
+needs = ["design"]
+description = """HUMAN REVIEW GATE: Present design to human for review and refinement.
+
+Discuss:
+- Does the approach make sense?
+- Any architectural concerns?
+- Simpler alternatives?
+- Anything missing?
+
+Iterate until human approves the design.
+
+AFTER APPROVAL: Commit design artifacts
+----------------------------------------
+Once human approves, commit the design documents:
+
+  git add docs/features/
+  git add .beads/work-docs/
+  git commit -m "High-level design approved for {{feature}}
+
+  - Architecture and component design
+  - TDD implementation plan
+  - Risk analysis and mitigations
+
+  Co-Authored-By: Claude (hubgpt-chat-completions-claude-sonnet-4-5) <noreply@anthropic.com>"
+
+This preserves the approved design in version control before implementation begins."""
+
+[[steps]]
+id = "tdd"
+title = "TDD implementation of {{feature}}"
+needs = ["design-review"]
+description = """Execute RED-GREEN-REFACTOR TDD loop for each acceptance criterion.
+
+APPROACH: One Bead at a Time (Just-in-Time)
+--------------------------------------------
+Create a task bead for EACH acceptance criterion as you work on it.
+Do NOT create all beads upfront - create them just-in-time.
+
+Acceptance criteria are documented in your feature file (e.g.,
+docs/features/my-feature.feature). Reference that file to see what's next.
+
+WORKFLOW FOR EACH ACCEPTANCE CRITERION:
+----------------------------------------
+
+1. Check progress (what's done?):
+   bd list --parent [this-molecule-id] --status closed
+
+2. Choose next acceptance criterion from feature file
+   (e.g., AC1, AC2, AC3... based on what's not done yet)
+
+3. Create bead for this criterion:
+   bd create "TDD: AC[N] - [criterion description]" --parent [this-molecule-id]
+
+4. Update bead to in_progress:
+   bd update [bead-id] --status in_progress
+
+5. RED Phase - Write failing test FIRST:
+   - Write acceptance test for this criterion ONLY
+   - Run test → Verify it FAILS (red)
+   - Commit: "RED: AC[N] - [description]"
+
+6. GREEN Phase - Make it pass:
+   - Write minimal code to pass test
+   - Run test → Verify it PASSES (green)
+   - Commit: "GREEN: AC[N] - [description]"
+
+7. REFACTOR Phase - Clean up:
+   - Improve code quality without changing behavior
+   - Run test → Verify STILL PASSES (green)
+   - Commit: "REFACTOR: AC[N] - [description]"
+
+8. Close bead:
+   bd update [bead-id] --status closed
+
+9. REPEAT: Go back to step 1 for next acceptance criterion
+
+CRITICAL RULES:
+- NEVER write production code without a failing test first
+- Create beads one-at-a-time as you work (just-in-time creation)
+- Tests written in acceptance/ directory, 1-to-1 with criteria
+- Use mocks (e.g., MockOcrEngine) for fast, deterministic tests
+- Each bead = one complete RED-GREEN-REFACTOR cycle
+- Feature file is source of truth for what ACs exist
+- Beads provide audit trail of what's been completed
+
+TRACKING PROGRESS ACROSS SESSIONS:
+-----------------------------------
+When resuming work in a new session:
+
+1. Check what's completed:
+   bd list --parent [this-molecule-id] --status closed
+
+2. Reference feature file to see all acceptance criteria
+
+3. Pick next AC that doesn't have a closed bead
+
+4. Create bead and work through RED-GREEN-REFACTOR
+
+Continue until ALL acceptance criteria from feature file have closed beads."""
+
+[[steps]]
+id = "submit"
+title = "Submit {{feature}} for merge"
+needs = ["tdd"]
+description = """Final submission after all TDD iterations complete.
+
+Checklist:
+- All acceptance tests pass
+- Code reviewed
+- No regressions in existing tests
+- Git status clean
+- Ready to push/merge"""
+
+[vars]
+[vars.feature]
+description = "The feature being implemented"
+required = true
+
+[vars.assignee]
+description = "Who is assigned to this work"
