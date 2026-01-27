@@ -35,6 +35,27 @@ const STUBBED_RESPONSES: Record<string, StubbedTranslation> = {
       'Now begins the discipline of union',
     ],
   },
+  'satyameva jayate': {
+    words: [
+      {
+        word: 'satyam',
+        meanings: ['truth'],
+      },
+      {
+        word: 'eva',
+        meanings: ['indeed', 'only', 'alone'],
+      },
+      {
+        word: 'jayate',
+        meanings: ['conquers', 'prevails', 'triumphs'],
+      },
+    ],
+    alternativeTranslations: [
+      'Truth alone triumphs',
+      'Truth alone prevails',
+      'Only truth conquers',
+    ],
+  },
 };
 
 /**

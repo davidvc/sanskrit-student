@@ -7,6 +7,9 @@ import { ClaudeLlmClient } from './adapters/claude-llm-client';
 import { ScriptDetectorImpl } from './domain/script-detector';
 import { ScriptNormalizerImpl } from './domain/script-normalizer';
 import { SanscriptConverter } from './adapters/sanscript-converter';
+import { OcrTranslationService } from './domain/ocr-translation-service';
+import { MockOcrEngine } from './adapters/mock-ocr-engine';
+import { InMemoryImageStorage } from './adapters/in-memory-image-storage';
 
 /**
  * Configuration options for creating the GraphQL server.
@@ -14,6 +17,9 @@ import { SanscriptConverter } from './adapters/sanscript-converter';
 export interface ServerConfig {
   /** The translation service to use for resolving translation queries */
   translationService: TranslationService;
+
+  /** Optional: OCR translation service for image uploads */
+  ocrTranslationService?: OcrTranslationService;
 }
 
 /**
@@ -35,7 +41,17 @@ export function createTestConfig(): ServerConfig {
   const baseService = new LlmTranslationService(llmClient);
   const normalizer = createScriptNormalizer();
   const translationService = new NormalizingTranslationService(normalizer, baseService);
-  return { translationService };
+
+  // Create OCR translation service with mocks
+  const mockOcrEngine = new MockOcrEngine();
+  const imageStorage = new InMemoryImageStorage();
+  const ocrTranslationService = new OcrTranslationService(
+    mockOcrEngine,
+    imageStorage,
+    translationService
+  );
+
+  return { translationService, ocrTranslationService };
 }
 
 /**
@@ -58,12 +74,18 @@ export function createProductionConfig(): ServerConfig {
  * @returns The configured GraphQL yoga server instance
  */
 export function createServer(config: ServerConfig) {
-  const { translationService } = config;
+  const { translationService, ocrTranslationService } = config;
 
   const schema = createSchema({
     typeDefs: /* GraphQL */ `
+      scalar Upload
+
       type Query {
         translateSutra(sutra: String!): TranslationResult
+      }
+
+      type Mutation {
+        translateSutraFromImage(image: Upload!): OcrTranslationResult!
       }
 
       type TranslationResult {
@@ -71,6 +93,16 @@ export function createServer(config: ServerConfig) {
         iastText: String!
         words: [WordEntry!]!
         alternativeTranslations: [String!]
+      }
+
+      type OcrTranslationResult {
+        originalText: String!
+        iastText: String!
+        words: [WordEntry!]!
+        alternativeTranslations: [String!]
+        ocrConfidence: Float!
+        extractedText: String!
+        ocrWarnings: [String!]
       }
 
       type WordEntry {
@@ -82,6 +114,14 @@ export function createServer(config: ServerConfig) {
       Query: {
         translateSutra: async (_parent: unknown, args: { sutra: string }) => {
           return translationService.translate(args.sutra);
+        },
+      },
+      Mutation: {
+        translateSutraFromImage: async (_parent: unknown, args: { image: any }) => {
+          if (!ocrTranslationService) {
+            throw new Error('OCR translation service not configured');
+          }
+          return ocrTranslationService.translateFromImage(args.image);
         },
       },
     },

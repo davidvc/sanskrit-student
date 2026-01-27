@@ -37,3 +37,17 @@ export class TranslationError extends Error {
     this.name = 'TranslationError';
   }
 }
+
+/**
+ * OCR translation result - extends TranslationResult with OCR metadata.
+ */
+export interface OcrTranslationResult extends TranslationResult {
+  /** OCR confidence score (0.0 to 1.0) */
+  ocrConfidence: number;
+
+  /** Raw text extracted by OCR (before normalization) */
+  extractedText: string;
+
+  /** Optional warnings (e.g., low confidence) */
+  ocrWarnings?: string[];
+}

@@ -64,12 +64,15 @@ describe('Feature: Devanagari OCR Image to Translation', () => {
         }
       `;
 
-      // Create a mock image file (in reality, MockOcrEngine will ignore the actual file)
-      const imageFile = new File(
-        [new Uint8Array([0x89, 0x50, 0x4e, 0x47])], // PNG magic bytes
-        'satyameva-jayate.png',
-        { type: 'image/png' }
-      );
+      // Create a mock file upload (using _buffer for testing)
+      const imageBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47]); // PNG magic bytes
+
+      const imageFile = {
+        filename: 'satyameva-jayate.png',
+        mimetype: 'image/png',
+        encoding: '7bit',
+        _buffer: imageBuffer, // For testing
+      };
 
       // Act
       const response = await server.executeQuery<TranslateSutraFromImageResponse>({
@@ -78,6 +81,9 @@ describe('Feature: Devanagari OCR Image to Translation', () => {
       });
 
       // Assert
+      if (response.errors) {
+        console.error('GraphQL Errors:', JSON.stringify(response.errors, null, 2));
+      }
       expect(response.errors).toBeUndefined();
       expect(response.data).toBeDefined();
 
@@ -86,7 +92,8 @@ describe('Feature: Devanagari OCR Image to Translation', () => {
       // OCR extraction verification
       expect(result.extractedText).toBe('सत्यमेव जयते');
       expect(result.ocrConfidence).toBeGreaterThanOrEqual(0.9);
-      expect(result.ocrWarnings).toBeUndefined(); // No warnings for high confidence
+      // No warnings for high confidence (GraphQL returns null for missing optional fields)
+      expect(result.ocrWarnings || undefined).toBeUndefined();
 
       // Translation verification
       expect(result.iastText).toBe('satyameva jayate');
