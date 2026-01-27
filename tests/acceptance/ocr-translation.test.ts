@@ -443,4 +443,60 @@ describe('Feature: Devanagari OCR Image to Translation', () => {
       expect(response.data).toBeNull();
     });
   });
+
+  /**
+   * AC9: Handle oversized image file
+   *
+   * Given: Image file larger than maximum allowed size (10MB)
+   * When: User uploads file to OCR translation endpoint
+   * Then:
+   *   - System returns error "Image file too large"
+   *   - System specifies maximum allowed size
+   *   - System provides HTTP status 413 (Payload Too Large)
+   */
+  describe('AC9: Oversized image error', () => {
+    it('should return error for oversized image file', async () => {
+      // Arrange
+      const mutation = `
+        mutation TranslateSutraFromImage($image: Upload!) {
+          translateSutraFromImage(image: $image) {
+            extractedText
+            iastText
+            words {
+              word
+              meanings
+            }
+            alternativeTranslations
+            ocrConfidence
+            ocrWarnings
+          }
+        }
+      `;
+
+      // Create mock file larger than 10MB
+      const oversizedBuffer = Buffer.alloc(11 * 1024 * 1024); // 11MB
+
+      const oversizedFile = {
+        filename: 'huge-image.png',
+        mimetype: 'image/png',
+        encoding: '7bit',
+        _buffer: oversizedBuffer,
+      };
+
+      // Act
+      const response = await server.executeQuery<TranslateSutraFromImageResponse>({
+        query: mutation,
+        variables: { image: oversizedFile },
+      });
+
+      // Assert - should have GraphQL error
+      expect(response.errors).toBeDefined();
+      expect(response.errors).toHaveLength(1);
+      expect(response.errors![0].message).toContain('too large');
+      expect(response.errors![0].message).toMatch(/10\s?MB/i);
+
+      // No data should be returned
+      expect(response.data).toBeNull();
+    });
+  });
 });
