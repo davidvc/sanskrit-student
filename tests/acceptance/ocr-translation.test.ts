@@ -332,4 +332,59 @@ describe('Feature: Devanagari OCR Image to Translation', () => {
       expect(result.words[0].meanings).toContain('sacred syllable');
     });
   });
+
+  /**
+   * AC7: Handle image with no Devanagari text
+   *
+   * Given: Image with no Devanagari script (e.g., English only)
+   * When: User uploads image to OCR translation endpoint
+   * Then:
+   *   - System returns error message "No Devanagari text detected"
+   *   - System provides HTTP status 422 (Unprocessable Entity)
+   *   - System does not attempt translation
+   */
+  describe('AC7: No Devanagari text error', () => {
+    it('should return error when no Devanagari text detected', async () => {
+      // Arrange
+      const mutation = `
+        mutation TranslateSutraFromImage($image: Upload!) {
+          translateSutraFromImage(image: $image) {
+            extractedText
+            iastText
+            words {
+              word
+              meanings
+            }
+            alternativeTranslations
+            ocrConfidence
+            ocrWarnings
+          }
+        }
+      `;
+
+      // Create mock file with no Devanagari text
+      const imageBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47]); // PNG magic bytes
+
+      const imageFile = {
+        filename: 'no-devanagari-english-only.png',
+        mimetype: 'image/png',
+        encoding: '7bit',
+        _buffer: imageBuffer,
+      };
+
+      // Act
+      const response = await server.executeQuery<TranslateSutraFromImageResponse>({
+        query: mutation,
+        variables: { image: imageFile },
+      });
+
+      // Assert - should have GraphQL error
+      expect(response.errors).toBeDefined();
+      expect(response.errors).toHaveLength(1);
+      expect(response.errors![0].message).toContain('No readable text detected');
+
+      // No data should be returned
+      expect(response.data).toBeNull();
+    });
+  });
 });
