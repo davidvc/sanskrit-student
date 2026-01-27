@@ -260,4 +260,76 @@ describe('Feature: Devanagari OCR Image to Translation', () => {
       expect(result.words[1].meanings).toContain('thread');
     });
   });
+
+  /**
+   * AC6: Handle poor quality image with noise
+   *
+   * Given: Low-quality image with visual noise
+   * When: User uploads image to OCR translation endpoint
+   * Then:
+   *   - System attempts OCR extraction
+   *   - If confidence is below threshold (0.7), returns a warning
+   *   - Provides best-effort extraction with confidence scores
+   *   - Still attempts translation with low-confidence markers
+   */
+  describe('AC6: Poor quality image with noise', () => {
+    it('should handle low-quality image with warnings', async () => {
+      // Arrange
+      const mutation = `
+        mutation TranslateSutraFromImage($image: Upload!) {
+          translateSutraFromImage(image: $image) {
+            extractedText
+            iastText
+            words {
+              word
+              meanings
+            }
+            alternativeTranslations
+            ocrConfidence
+            ocrWarnings
+          }
+        }
+      `;
+
+      // Create mock file representing a noisy, low-quality image
+      const imageBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47]); // PNG magic bytes
+
+      const imageFile = {
+        filename: 'low-quality-noisy-om.png',
+        mimetype: 'image/png',
+        encoding: '7bit',
+        _buffer: imageBuffer,
+      };
+
+      // Act
+      const response = await server.executeQuery<TranslateSutraFromImageResponse>({
+        query: mutation,
+        variables: { image: imageFile },
+      });
+
+      // Assert
+      expect(response.errors).toBeUndefined();
+      expect(response.data).toBeDefined();
+
+      const result = response.data!.translateSutraFromImage;
+
+      // OCR extraction - best effort despite noise
+      expect(result.extractedText).toBe('ॐ');
+
+      // Low confidence score (below 0.7 threshold)
+      expect(result.ocrConfidence).toBeLessThan(0.7);
+      expect(result.ocrConfidence).toBeGreaterThan(0.1); // Still readable
+
+      // Warning should be present for low confidence
+      expect(result.ocrWarnings).toBeDefined();
+      expect(result.ocrWarnings).toHaveLength(1);
+      expect(result.ocrWarnings![0]).toContain('Low OCR confidence');
+
+      // Translation still provided despite low confidence
+      expect(result.iastText).toBe('oṃ');
+      expect(result.words).toHaveLength(1);
+      expect(result.words[0].word).toBe('oṃ');
+      expect(result.words[0].meanings).toContain('sacred syllable');
+    });
+  });
 });
