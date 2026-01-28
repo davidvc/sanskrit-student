@@ -78,18 +78,6 @@
           }
         ]
       }
-    ],
-    "UserPromptSubmit": [
-      {
-        "description": "Enforce task packet gate before implementation work",
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 /Users/dvancouvering/projects/sanksrit-student/.claude/hooks/check-task-packet.py"
-          }
-        ]
-      }
     ]
   }
 }

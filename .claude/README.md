@@ -27,7 +27,6 @@ This directory contains Claude Code integration for the ai-pack framework, provi
 │
 ├── rules/                 # Modular rules (auto-loaded)
 │   ├── gates.md
-│   ├── task-packets.md
 │   ├── workflows.md
 │   └── README.md
 │
@@ -49,8 +48,6 @@ Manual commands you invoke explicitly:
 
 ```bash
 /ai-pack help              # Show all commands
-/ai-pack task-init <name>  # Create task packet
-/ai-pack task-status       # Check progress
 /ai-pack orchestrate       # Assume Orchestrator role
 /ai-pack engineer          # Assume Engineer role
 /ai-pack review            # Start code review
@@ -60,6 +57,8 @@ Manual commands you invoke explicitly:
 /ai-pack designer          # UX workflows
 /ai-pack pm                # Product requirements
 ```
+
+**Note:** Task management is handled via Beads (`bd` and `bt` commands), not ai-pack commands.
 
 **Centralized namespace:** All commands under `/ai-pack` prefix.
 
@@ -76,19 +75,18 @@ Skills provide role-specific guidance automatically when Claude detects relevant
 
 Automatically loaded instructions for all files:
 
-- **gates.md** - Mandatory quality gates (task packets, reviews, etc.)
-- **task-packets.md** - Task packet requirements and lifecycle
+- **gates.md** - Mandatory quality gates (Beads tasks, reviews, etc.)
 - **workflows.md** - Workflow selection guide
 
 Rules are context-specific and always active.
 
 ### 4. Hooks (`hooks/`)
 
-Python scripts that enforce framework gates:
+Python scripts that support framework features:
 
-- **task-init.py** - Creates task packets
-- **task-status.py** - Shows task progress
-- **check-task-packet.py** - Blocks implementation without task packet
+- **session-start.py** - Initialize monitoring timers
+- **session-end.py** - Cleanup on session end
+- _(Note: Task packet enforcement hooks removed - using Beads instead)_
 
 Hooks run automatically via Claude Code's hook system (configured in `settings.json`).
 
@@ -190,10 +188,11 @@ Without these permissions, spawned agents will be blocked when attempting file o
 **User:** "Implement the login feature"
 
 **What happens:**
-1. **Hook fires** - `check-task-packet.py` verifies task packet exists
+1. **Beads task created** - Task tracked in `.beads/` database
 2. **Skill activates** - Engineer skill provides TDD guidance
 3. **Rules apply** - Gates and standards are enforced
 4. **Commands available** - User can run `/ai-pack test` when ready
+5. **Beads task updated** - Progress tracked via `bd` commands
 
 ## Setup for New Projects
 
@@ -284,14 +283,10 @@ The update script:
 ### Testing Setup
 
 ```bash
-# Test task status
-python3 .claude/hooks/task-status.py
-
-# Test task init
-python3 .claude/hooks/task-init.py test-task
-
-# Test gate enforcement
-echo '{"user_input": "implement login"}' | python3 .claude/hooks/check-task-packet.py
+# Test Beads integration
+bd list                     # List all tasks
+bd create "Test task"       # Create a test task
+bt --help                   # View available formulas
 ```
 
 ## References
@@ -330,15 +325,19 @@ echo '{"user_input": "implement login"}' | python3 .claude/hooks/check-task-pack
 cat .claude/settings.json | grep -A5 permissions
 ```
 
-### Task Packet Hook Not Firing
+### Beads Commands Not Working
 
-**Symptom:** Implementation proceeds without task packet creation.
+**Symptom:** `bd` or `bt` commands not found.
 
-**Solution:** Verify hooks are configured in `settings.json`:
+**Solution:** Ensure Beads is installed and configured:
 
 ```bash
-# Check hook configuration
-cat .claude/settings.json | grep -A10 hooks
+# Check Beads installation
+which bd
+which bt
+
+# Check .beads/ directory exists
+ls -la .beads/
 ```
 
 ### Commands Not Available

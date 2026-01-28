@@ -5,33 +5,11 @@
 
 ---
 
-## ⚠️ CRITICAL: Task Packet Requirement
+## 🎯 Task Management with Beads
 
-**BEFORE starting ANY non-trivial task, you MUST:**
+**This project uses Beads for task management** instead of AI packets.
 
-```bash
-# Use the ai-pack command
-/ai-pack task-init <task-name>
-```
-
-This will:
-1. Create task packet directory: `.ai/tasks/YYYY-MM-DD_task-name/`
-2. Copy ALL templates from `.ai-pack/templates/task-packet/`
-3. Set up contract, plan, work log, review, and acceptance documents
-
-**Then fill out:**
-- `00-contract.md` - Requirements and acceptance criteria
-- `10-plan.md` - Implementation approach
-
-**ONLY THEN begin implementation.**
-
-**Non-Trivial = Any task that:**
-- Requires >2 steps
-- Involves code changes
-- Takes >30 minutes
-- Needs verification
-
-**This is MANDATORY and enforced by hooks.**
+Use Beads commands (`bd`) and Beads formulas (`bt`) to manage tasks. See the Beads section below for details.
 
 ---
 
@@ -96,16 +74,11 @@ bd show <task-id>          # View full task info
 
 As Orchestrator (your default role), you MUST:
 
-1. **Create Beads tasks BEFORE task packets**
+1. **Create Beads tasks for all work**
    ```bash
-   # Step 1: Create Beads task
+   # Create Beads task
    task_id=$(bd create "Implement user authentication" --priority high --json | jq -r '.id')
-
-   # Step 2: THEN create task packet
-   /ai-pack task-init user-authentication
-
-   # Step 3: Link in contract
-   echo "**Beads Task:** ${task_id}" >> .ai/tasks/*/00-contract.md
+   bd start ${task_id}
    ```
 
 2. **Track all spawned agents with Beads**
@@ -126,15 +99,11 @@ As Orchestrator (your default role), you MUST:
    bd dep add <child-task> <parent-task>
    ```
 
-### Enforcement
-
-**BLOCKING GATE:** Cannot proceed without Beads tasks.
-
-- Task packets without Beads tasks → BLOCKED
-- Agent spawns without Beads tasks → BLOCKED
-- Progress monitoring via file inspection → BLOCKED (use `bd list`)
-
-**Reference:** [Beads Enforcement Gate](.ai-pack/gates/06-beads-enforcement.md)
+5. **Use Beads formulas for complex workflows**
+   ```bash
+   bt --help                       # See available formulas
+   bt <formula-name> <args>        # Execute a formula
+   ```
 
 ---
 
@@ -168,9 +137,8 @@ project-root/
 └── CLAUDE.md           # This file
 ```
 
-**Key Distinction:**
+**Key Component:**
 - **`.beads/`** = Source of truth for task STATE (open, closed, blocked, dependencies)
-- **`.ai/tasks/`** = Documentation of task IMPLEMENTATION (contracts, plans, work logs)
 
 ---
 
@@ -184,8 +152,6 @@ Type `/ai-pack` to see all commands:
 
 ```bash
 /ai-pack help              # Show all commands
-/ai-pack task-init <name>  # Create task packet
-/ai-pack task-status       # Check progress
 /ai-pack orchestrate       # Complex coordination
 /ai-pack engineer          # Direct implementation
 /ai-pack test              # Validate tests
@@ -196,8 +162,7 @@ Type `/ai-pack` to see all commands:
 /ai-pack pm                # Product requirements
 ```
 
-**Automatic Enforcement:**
-- Task packet gate enforced via hooks
+**Features:**
 - Rules auto-loaded for all files
 - Skills auto-trigger based on keywords
 
@@ -223,37 +188,25 @@ Before any task, read these foundational documents:
 
 ## Task Management Protocol
 
-### MANDATORY: Task Packet Creation
+### Use Beads for Task Management
 
-**CRITICAL REQUIREMENT:** Every non-trivial task MUST have a task packet in `.ai/tasks/` created BEFORE implementation begins.
+**All task tracking uses Beads** (`bd` commands and `bt` formulas):
 
 ```bash
-# Create task directory
-TASK_ID=$(date +%Y-%m-%d)_task-name
-mkdir -p .ai/tasks/$TASK_ID
+# Create and start tasks
+bd create "Task description" --priority high
+bd start <task-id>
 
-# Copy templates from .ai-pack
-cp .ai-pack/templates/task-packet/00-contract.md .ai/tasks/$TASK_ID/
-cp .ai-pack/templates/task-packet/10-plan.md .ai/tasks/$TASK_ID/
-cp .ai-pack/templates/task-packet/20-work-log.md .ai/tasks/$TASK_ID/
-cp .ai-pack/templates/task-packet/30-review.md .ai/tasks/$TASK_ID/
-cp .ai-pack/templates/task-packet/40-acceptance.md .ai/tasks/$TASK_ID/
+# Track progress
+bd list
+bd show <task-id>
+
+# Use formulas for complex workflows
+bt --help
+bt <formula-name> <args>
 ```
 
-**2. Follow Task Lifecycle**
-
-All task packets go through these phases:
-
-1. **Contract** (`00-contract.md`) - Define requirements and acceptance criteria
-2. **Plan** (`10-plan.md`) - Document implementation approach
-3. **Work Log** (`20-work-log.md`) - Track execution progress
-4. **Review** (`30-review.md`) - Quality assurance
-5. **Acceptance** (`40-acceptance.md`) - Sign-off and completion
-
-**3. CRITICAL: Task Packet Location**
-
-✅ **Correct:** `.ai/tasks/YYYY-MM-DD_task-name/`
-❌ **NEVER:** `.ai-pack/` (this is shared framework, not for task state)
+**Task state is managed in `.beads/` directory** (git-backed, persistent across sessions)
 
 ---
 
@@ -284,7 +237,7 @@ All task packets go through these phases:
 - Direct implementation of specific, well-defined tasks
 - Write code and tests
 - Follow established patterns
-- Update work log
+- Update Beads task state as work progresses
 
 **Reference:** [.ai-pack/roles/engineer.md](.ai-pack/roles/engineer.md)
 
@@ -370,18 +323,18 @@ If this project has specific rules beyond the shared standards:
 ### Starting a New Task
 
 1. Read gates and standards (see above)
-2. Create task packet in `.ai/tasks/`
-3. Fill out `00-contract.md`
-4. Select appropriate workflow
+2. Create Beads task: `bd create "Task description" --priority high`
+3. Start the task: `bd start <task-id>`
+4. Select appropriate workflow (if needed for reference)
 5. Assume appropriate role
-6. Execute workflow phases
+6. Execute work, updating Beads state as you go
 
 ### Working on Existing Task
 
-1. Read task packet in `.ai/tasks/YYYY-MM-DD_task-name/`
-2. Review current phase
-3. Continue from where left off
-4. Update work log regularly
+1. Check Beads tasks: `bd list` or `bd show <task-id>`
+2. Review current status and dependencies
+3. Continue work
+4. Update Beads state as you progress
 
 ### Updating Framework
 
@@ -459,10 +412,11 @@ git commit -m "Update ai-pack framework"
 **See:** [.ai-pack/ROLE-EXTENSION-GUIDE.md](.ai-pack/ROLE-EXTENSION-GUIDE.md) for complete guide
 
 ### ✅ DO
-- Create task packets in `.ai/tasks/`
+- Create Beads tasks for all work: `bd create`
+- Update Beads state as you work: `bd start`, `bd close`
+- Use Beads formulas for complex workflows: `bt <formula>`
 - Create role extensions in `.ai/roles/`
-- Follow gates and workflows
-- Update work logs regularly
+- Follow quality gates
 - Reference standards when making decisions
 - Document extensions in `.ai/repo-overrides.md`
 - Ask questions when uncertain
@@ -470,9 +424,7 @@ git commit -m "Update ai-pack framework"
 ### ❌ NEVER
 - Edit files in `.ai-pack/` (immutable!)
 - Add files to `.ai-pack/` (use `.ai/` instead)
-- Put task packets in `.ai-pack/`
 - Put role extensions in `.claude/` (use `.ai/roles/`)
-- Overwrite `.ai/tasks/` during updates
 - Skip gate checkpoints
 - Proceed with failing tests
 - Leave extensions undocumented
@@ -487,7 +439,7 @@ git commit -m "Update ai-pack framework"
 **Templates:** `.ai-pack/templates/`
 **Standards:** `.ai-pack/quality/`
 
-**Task Packets:** `.ai/tasks/YYYY-MM-DD_task-name/`
+**Beads Tasks:** `.beads/` (task state database)
 **Overrides:** `.ai/repo-overrides.md` (optional)
 
 ---

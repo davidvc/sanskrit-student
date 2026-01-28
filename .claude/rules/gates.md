@@ -6,28 +6,23 @@ paths: **/*
 
 All work must follow these quality gates from the ai-pack framework.
 
-## Gate 1: Task Packet Requirement (BLOCKING)
+## Gate 1: Beads Task Management (BLOCKING)
 
-**BEFORE starting ANY non-trivial task:**
+**BEFORE starting ANY task:**
 
 ```bash
-# Create task packet
-/ai-pack task-init <task-name>
+# Create Beads task
+bd create "Task description" --priority high
 
-# Fill out contract and plan
-# Edit .ai/tasks/YYYY-MM-DD_task-name/00-contract.md
-# Edit .ai/tasks/YYYY-MM-DD_task-name/10-plan.md
+# Start the task
+bd start <task-id>
+
+# Use formulas for complex workflows
+bt --help
+bt <formula-name> <args>
 ```
 
-**Non-trivial = Any task that:**
-- Requires >2 steps
-- Involves code changes
-- Takes >30 minutes
-- Needs verification
-
-**Enforcement:** Implementation is BLOCKED without task packet.
-
-**Reference:** `.ai-pack/gates/00-global-gates.md`
+**Enforcement:** All work must be tracked in Beads.
 
 ---
 
@@ -36,13 +31,13 @@ All work must follow these quality gates from the ai-pack framework.
 **For tasks with 3+ independent subtasks:**
 
 1. **Analyze parallelization opportunities** BEFORE execution
-2. **Document strategy** in `.ai/tasks/*/10-plan.md`:
-   - Which subtasks can run in parallel
-   - Which must be sequential
-   - Shared resource coordination (builds, databases, coverage)
+2. **Track strategy using Beads**:
+   - Create subtasks with dependencies: `bd dep add <child> <parent>`
+   - Mark which can run in parallel vs sequential
+   - Use Beads formulas to coordinate complex workflows
 3. **Execute accordingly** - Use Task tool for parallel work
 
-**Enforcement:** Cannot execute without documented strategy.
+**Enforcement:** Cannot execute without documented strategy in Beads.
 
 **Reference:** `.ai-pack/gates/25-execution-strategy.md`
 
@@ -132,12 +127,13 @@ dotnet test
 
 Before marking work complete:
 
-- [ ] Task packet created and updated
-- [ ] Execution strategy documented (if 3+ subtasks)
+- [ ] Beads task created and tracked
+- [ ] Execution strategy documented in Beads (if 3+ subtasks)
 - [ ] TDD process followed (RED-GREEN-REFACTOR)
 - [ ] Tester validated (APPROVED)
 - [ ] Reviewer validated (APPROVED)
 - [ ] Planning artifacts persisted (if specialists used)
 - [ ] C# tooling passed (if C# project)
+- [ ] Beads task closed: `bd close <task-id>`
 
 **All gates must pass before work is accepted.**

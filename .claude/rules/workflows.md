@@ -21,11 +21,11 @@ Choose the appropriate workflow based on task type.
 **Path:** `.ai-pack/workflows/standard.md`
 
 **Phases:**
-1. Setup - Create task packet
+1. Setup - Create Beads task
 2. Planning - Define approach
 3. Execution - Implement solution
 4. Quality Assurance - Tester + Reviewer validation
-5. Completion - Sign-off
+5. Completion - Close Beads task
 
 **Use for:** Most tasks
 
@@ -110,7 +110,7 @@ Choose the appropriate workflow based on task type.
 ### Common to All Workflows
 
 **Quality Gates:**
-- Task packet requirement
+- Beads task management
 - Tester validation (for code changes)
 - Reviewer validation (for code changes)
 
@@ -121,8 +121,8 @@ Choose the appropriate workflow based on task type.
 - Reviewer - Validates code quality
 
 **Documentation:**
-- Task packets in `.ai/tasks/`
-- Planning artifacts in `docs/`
+- Task state in `.beads/` (managed by bd/bt commands)
+- Planning artifacts in `docs/` (optional)
 
 ### Specialist Roles (Optional)
 
