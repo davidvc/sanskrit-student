@@ -1,99 +1,59 @@
 # Sanskrit Student
 
-A Sanskrit sutra translation service that provides word-by-word breakdowns and multiple translation options. Supports both text input and Devanagari OCR from images.
+A Sanskrit translation tool that provides word-by-word breakdowns and multiple translation options. Translate text directly or upload images containing Devanagari script.
 
 ## Features
 
-- **Text Translation**: Translate Sanskrit sutras from either Devanagari or IAST (International Alphabet of Sanskrit Transliteration)
-- **OCR Translation**: Upload images containing Devanagari text for automatic OCR and translation
-- **Word-by-Word Breakdown**: Get detailed meanings for each word in the sutra
-- **Alternative Translations**: Receive up to 3 alternative translations for context
-- **Script Conversion**: Automatic conversion between Devanagari and IAST formats
-- **GraphQL API**: Query-based API with both queries and mutations
-- **CLI Tool**: Command-line interface for quick translations
-
-## Table of Contents
-
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-  - [CLI Usage](#cli-usage)
-  - [GraphQL Server](#graphql-server)
-  - [API Examples](#api-examples)
-- [Development](#development)
-- [Testing](#testing)
-- [Architecture](#architecture)
-- [API Reference](#api-reference)
-- [License](#license)
-
-## Prerequisites
-
-- **Node.js**: Version 20.19.0 or higher
-- **Anthropic API Key**: Required for production translation using Claude (optional for testing with mock data)
+- Translate Sanskrit sutras (text or images)
+- Word-by-word breakdown with meanings
+- Multiple translation options
+- Support for both Devanagari and IAST formats
 
 ## Installation
 
-1. Clone the repository:
+1. **Prerequisites**
+   - Node.js 20.19.0 or higher
+   - Anthropic API key (for Claude AI translations)
+   - Google Cloud Vision API key (for OCR from images)
+
+2. **Clone and install**
 
 ```bash
 git clone git@github.com:davidvc/sanksrit-student.git
 cd sanksrit-student
-```
-
-2. Install dependencies:
-
-```bash
 npm install
-```
-
-3. Build the project:
-
-```bash
 npm run build
 ```
 
-## Configuration
+3. **Configure API keys**
 
-### Environment Variables
-
-For production use with Claude AI, create a `.env` file in the project root:
+Create a `.env` file in the project root:
 
 ```bash
-ANTHROPIC_API_KEY=your_api_key_here
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/google-cloud-credentials.json
 ```
 
-Get your API key from [Anthropic Console](https://console.anthropic.com/).
-
-**Note**: The mock client doesn't require an API key and can be used for testing.
+**Getting API keys:**
+- Anthropic API: https://console.anthropic.com/
+- Google Cloud Vision: https://console.cloud.google.com/apis/credentials
 
 ## Usage
 
-### CLI Usage
-
-The CLI provides a simple way to translate sutras from the command line.
-
-#### Basic Translation
+### Translate from Text (CLI)
 
 ```bash
+# IAST transliteration
 npm run translate "atha yoganusasanam"
-```
 
-#### Using Mock Data (No API Key Required)
-
-```bash
-npm run translate -- --mock "atha yoganusasanam"
-```
-
-#### Devanagari Input
-
-```bash
+# Devanagari script
 npm run translate "अथ योगानुशासनम्"
+
+# Using mock data (no API key needed)
+npm run translate -- --mock "om"
 ```
 
-#### Output Format
-
-The CLI returns JSON with the translation result:
+**Example output:**
 
 ```json
 {
@@ -106,41 +66,70 @@ The CLI returns JSON with the translation result:
     },
     {
       "word": "yogānuśāsanam",
-      "meanings": ["instruction on yoga", "teaching of yoga", "discipline of yoga"]
+      "meanings": ["instruction on yoga", "teaching of yoga"]
     }
   ],
   "alternativeTranslations": [
     "Now, the teaching of yoga",
-    "Here begins the instruction on yoga",
-    "Now begins the discipline of union"
+    "Here begins the instruction on yoga"
   ]
 }
 ```
 
-### GraphQL Server
+### Translate from Image (GraphQL API)
 
-Start the GraphQL server for interactive queries and image uploads.
-
-#### Starting the Server
+1. **Start the server**
 
 ```bash
-# Production mode (requires ANTHROPIC_API_KEY)
+# Production (requires API keys)
 node dist/server.js
 
-# Development mode with mock data
+# Testing with mock data
 node dist/server.js --mock
 ```
 
-The server will start on `http://localhost:4000` with GraphQL Playground available at `http://localhost:4000/graphql`.
+Server runs at: `http://localhost:4000/graphql`
 
-### API Examples
+2. **Upload image via GraphQL**
 
-#### Query: Translate Text
-
-**GraphQL Query:**
+**Using GraphQL Playground** (http://localhost:4000/graphql):
 
 ```graphql
-query TranslateSutra {
+mutation TranslateImage($image: Upload!) {
+  translateSutraFromImage(image: $image) {
+    originalText
+    iastText
+    extractedText
+    ocrConfidence
+    words {
+      word
+      meanings
+    }
+    alternativeTranslations
+  }
+}
+```
+
+Upload your image file in the variables section.
+
+**Using cURL:**
+
+```bash
+curl http://localhost:4000/graphql \
+  -F operations='{"query": "mutation($image: Upload!) { translateSutraFromImage(image: $image) { originalText iastText extractedText ocrConfidence } }", "variables": { "image": null }}' \
+  -F map='{"0": ["variables.image"]}' \
+  -F 0=@/path/to/sanskrit-image.png
+```
+
+**Image requirements:**
+- Supported formats: PNG, JPG, JPEG, WEBP, TIFF
+- Maximum size: 10 MB
+- Must contain Devanagari text
+
+### Translate Text via GraphQL
+
+```graphql
+query {
   translateSutra(sutra: "satyameva jayate") {
     originalText
     iastText
@@ -153,428 +142,119 @@ query TranslateSutra {
 }
 ```
 
-**Response:**
+## Google Cloud Vision Setup
 
-```json
-{
-  "data": {
-    "translateSutra": {
-      "originalText": "satyameva jayate",
-      "iastText": "satyam eva jayate",
-      "words": [
-        {
-          "word": "satyam",
-          "meanings": ["truth"]
-        },
-        {
-          "word": "eva",
-          "meanings": ["indeed", "only", "alone"]
-        },
-        {
-          "word": "jayate",
-          "meanings": ["conquers", "prevails", "triumphs"]
-        }
-      ],
-      "alternativeTranslations": [
-        "Truth alone triumphs",
-        "Truth alone prevails",
-        "Only truth conquers"
-      ]
-    }
-  }
-}
-```
+The tool currently uses a **mock OCR engine** for testing. To enable **real OCR** with Google Cloud Vision:
 
-#### Mutation: Translate from Image
+### 1. Enable Google Cloud Vision API
 
-**GraphQL Mutation:**
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project (or select existing)
+3. Enable the **Cloud Vision API**
+4. Create a service account and download credentials JSON
 
-```graphql
-mutation TranslateImage($image: Upload!) {
-  translateSutraFromImage(image: $image) {
-    originalText
-    iastText
-    extractedText
-    ocrConfidence
-    ocrWarnings
-    words {
-      word
-      meanings
-    }
-    alternativeTranslations
-  }
-}
-```
-
-**Variables:**
-
-```json
-{
-  "image": null
-}
-```
-
-**Note**: When using GraphQL Playground or a GraphQL client, upload the image file through the file upload interface.
-
-**cURL Example:**
+### 2. Install Google Cloud Vision SDK
 
 ```bash
-curl http://localhost:4000/graphql \
-  -F operations='{"query": "mutation($image: Upload!) { translateSutraFromImage(image: $image) { originalText iastText extractedText ocrConfidence } }", "variables": { "image": null }}' \
-  -F map='{"0": ["variables.image"]}' \
-  -F 0=@/path/to/sanskrit-image.png
+npm install @google-cloud/vision
 ```
 
-**Response:**
+### 3. Create Google Vision Adapter
 
-```json
-{
-  "data": {
-    "translateSutraFromImage": {
-      "originalText": "सत्यमेव जयते",
-      "iastText": "satyam eva jayate",
-      "extractedText": "सत्यमेव जयते",
-      "ocrConfidence": 0.96,
-      "ocrWarnings": null,
-      "words": [
-        {
-          "word": "satyam",
-          "meanings": ["truth"]
-        },
-        {
-          "word": "eva",
-          "meanings": ["indeed", "only", "alone"]
-        },
-        {
-          "word": "jayate",
-          "meanings": ["conquers", "prevails", "triumphs"]
-        }
-      ],
-      "alternativeTranslations": [
-        "Truth alone triumphs",
-        "Truth alone prevails",
-        "Only truth conquers"
-      ]
-    }
+Create `src/adapters/google-vision-ocr-engine.ts`:
+
+```typescript
+import vision from '@google-cloud/vision';
+import { OcrEngine, OcrResult, OcrOptions } from '../domain/ocr-engine';
+
+export class GoogleVisionOcrEngine implements OcrEngine {
+  private client: vision.ImageAnnotatorClient;
+
+  constructor() {
+    this.client = new vision.ImageAnnotatorClient();
+  }
+
+  async extractText(imageBuffer: Buffer, options?: OcrOptions): Promise<OcrResult> {
+    const [result] = await this.client.textDetection({
+      image: { content: imageBuffer },
+      imageContext: options?.languageHints
+        ? { languageHints: options.languageHints }
+        : undefined
+    });
+
+    const detections = result.textAnnotations || [];
+    const text = detections[0]?.description || '';
+    const confidence = detections[0]?.confidence || 0;
+
+    return {
+      text: text.trim(),
+      confidence: confidence,
+      language: detections[0]?.locale || 'unknown'
+    };
   }
 }
 ```
 
-#### OCR Image Requirements
+### 4. Update Server Configuration
 
-- **Supported Formats**: PNG, JPG, JPEG, WEBP, TIFF
-- **Maximum File Size**: 10 MB
-- **Minimum OCR Confidence**: 0.1 (10%)
-- **Low Confidence Warning**: Below 0.7 (70%) triggers a warning
+Edit `src/server.ts` - replace `MockOcrEngine` with `GoogleVisionOcrEngine`:
 
-**OCR Warnings:**
+```typescript
+import { GoogleVisionOcrEngine } from './adapters/google-vision-ocr-engine';
 
-If OCR confidence is below 70%, you'll receive a warning in the response:
+export function createProductionConfig(): ServerConfig {
+  const llmClient = new ClaudeLlmClient();
+  const baseService = new LlmTranslationService(llmClient);
+  const normalizer = createScriptNormalizer();
+  const translationService = new NormalizingTranslationService(normalizer, baseService);
 
-```json
-{
-  "ocrWarnings": ["Low OCR confidence - please verify extracted text"]
+  // Add Google Vision OCR
+  const googleOcrEngine = new GoogleVisionOcrEngine();
+  const imageStorage = new InMemoryImageStorage();
+  const ocrTranslationService = new OcrTranslationService(
+    googleOcrEngine,
+    imageStorage,
+    translationService
+  );
+
+  return { translationService, ocrTranslationService };
 }
 ```
 
-**Common Errors:**
+### 5. Set Environment Variable
 
-- **Unsupported format**: `"Unsupported image format: image/bmp. Supported formats: PNG, JPG, JPEG, WEBP, TIFF"`
-- **File too large**: `"Image file too large: 15000000 bytes. Maximum allowed: 10MB"`
-- **Corrupted file**: `"Invalid or corrupted image file"`
-- **No text detected**: `"No readable text detected in image"`
-
-## Development
-
-### Project Structure
-
-```
-sanskrit-student/
-├── src/
-│   ├── domain/              # Core business logic and interfaces
-│   │   ├── llm-client.ts              # LLM client interface
-│   │   ├── ocr-engine.ts              # OCR engine interface
-│   │   ├── ocr-translation-service.ts # OCR orchestration service
-│   │   ├── script-converter.ts        # Script conversion interface
-│   │   ├── script-detector.ts         # Script detection
-│   │   ├── script-normalizer.ts       # Script normalization
-│   │   ├── translation-service.ts     # Translation service interface
-│   │   ├── image-storage-strategy.ts  # Image storage interface
-│   │   └── types.ts                   # Shared types
-│   ├── adapters/            # External service implementations
-│   │   ├── claude-llm-client.ts       # Claude API client
-│   │   ├── mock-llm-client.ts         # Mock LLM for testing
-│   │   ├── mock-ocr-engine.ts         # Mock OCR for testing
-│   │   ├── in-memory-image-storage.ts # Memory-based image storage
-│   │   ├── llm-translation-service.ts # LLM-based translation
-│   │   ├── normalizing-translation-service.ts  # Script normalization wrapper
-│   │   ├── sanscript-converter.ts     # Sanscript library adapter
-│   │   └── prompt-loader.ts           # Prompt template loader
-│   ├── cli.ts               # Command-line interface
-│   └── server.ts            # GraphQL server setup
-├── tests/
-│   ├── unit/                # Unit tests
-│   └── acceptance/          # Acceptance tests
-├── prompts/                 # LLM prompt templates
-├── package.json
-├── tsconfig.json
-└── README.md
-```
-
-### Architecture
-
-This project follows **Hexagonal Architecture** (Ports and Adapters):
-
-- **Domain Layer** (`src/domain/`): Core business logic, interfaces (ports)
-- **Adapter Layer** (`src/adapters/`): External service implementations
-- **Dependency Injection**: Services are composed through constructor injection
-
-**Key Design Patterns:**
-
-- **Port/Adapter Pattern**: Clear separation between domain logic and external dependencies
-- **Strategy Pattern**: Swappable implementations (MockLlmClient vs ClaudeLlmClient)
-- **Decorator Pattern**: NormalizingTranslationService wraps base translation
-- **Template Method**: OcrTranslationService orchestrates multi-step OCR → translation flow
-
-### Running in Development Mode
+Add to `.env`:
 
 ```bash
-# Watch mode for tests
-npm run test:watch
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/google-credentials.json
+```
 
-# Type checking
-npm run lint
+### 6. Rebuild and Run
 
-# Build TypeScript
+```bash
 npm run build
+node dist/server.js
 ```
 
-## Testing
+Now image uploads will use Google Cloud Vision for real OCR!
 
-### Running Tests
+## Troubleshooting
 
-```bash
-# Run all tests
-npm test
+**"Missing API key" errors:**
+- Check that `.env` file exists in project root
+- Verify API keys are correct
+- Use `--mock` flag for testing without API keys
 
-# Run tests in watch mode
-npm run test:watch
-```
+**OCR not working:**
+- Ensure Google Cloud Vision API is enabled
+- Verify `GOOGLE_APPLICATION_CREDENTIALS` path is correct
+- Check that credentials JSON file has proper permissions
+- Confirm image format is supported (PNG, JPG, WEBP, TIFF)
 
-### Test Coverage
-
-The project uses **Vitest** for testing with comprehensive coverage:
-
-- **Unit Tests**: Test individual components in isolation
-- **Acceptance Tests**: End-to-end scenarios including OCR workflows
-
-**Mock Clients:**
-
-The project includes mock implementations for testing without external dependencies:
-
-- `MockLlmClient`: Returns stubbed translations for known sutras
-- `MockOcrEngine`: Returns predefined OCR results based on filename patterns
-
-### Example Test Scenarios
-
-**Text Translation:**
-
-```typescript
-import { createTestConfig, createServer } from '../src/server';
-
-const config = createTestConfig();
-const server = createServer(config);
-
-const response = await server.executeQuery({
-  query: `query { translateSutra(sutra: "om") { iastText } }`
-});
-```
-
-**OCR Translation:**
-
-```typescript
-const imageFile = {
-  filename: 'sanskrit-text.png',
-  mimetype: 'image/png',
-  encoding: '7bit',
-  _buffer: Buffer.from('...') // PNG image bytes
-};
-
-const response = await server.executeQuery({
-  query: `mutation($image: Upload!) {
-    translateSutraFromImage(image: $image) {
-      extractedText
-      ocrConfidence
-    }
-  }`,
-  variables: { image: imageFile }
-});
-```
-
-## API Reference
-
-### GraphQL Schema
-
-#### Types
-
-```graphql
-scalar Upload
-
-type Query {
-  translateSutra(sutra: String!): TranslationResult
-}
-
-type Mutation {
-  translateSutraFromImage(image: Upload!): OcrTranslationResult!
-}
-
-type TranslationResult {
-  originalText: String!
-  iastText: String!
-  words: [WordEntry!]!
-  alternativeTranslations: [String!]
-}
-
-type OcrTranslationResult {
-  originalText: String!
-  iastText: String!
-  words: [WordEntry!]!
-  alternativeTranslations: [String!]
-  ocrConfidence: Float!
-  extractedText: String!
-  ocrWarnings: [String!]
-}
-
-type WordEntry {
-  word: String!
-  meanings: [String!]!
-}
-```
-
-#### Query: translateSutra
-
-Translate a Sanskrit sutra from text input.
-
-**Arguments:**
-
-- `sutra` (String!): Sanskrit text in either Devanagari or IAST format
-
-**Returns:** `TranslationResult`
-
-**Example:**
-
-```graphql
-query {
-  translateSutra(sutra: "योगश्चित्तवृत्तिनिरोधः") {
-    originalText
-    iastText
-    words {
-      word
-      meanings
-    }
-    alternativeTranslations
-  }
-}
-```
-
-#### Mutation: translateSutraFromImage
-
-Extract and translate Sanskrit text from an uploaded image.
-
-**Arguments:**
-
-- `image` (Upload!): Image file containing Devanagari text
-
-**Returns:** `OcrTranslationResult`
-
-**Validation:**
-
-- Supported formats: PNG, JPG, JPEG, WEBP, TIFF
-- Maximum size: 10 MB
-- Minimum OCR confidence: 0.1 (10%)
-
-**Example:**
-
-```graphql
-mutation($image: Upload!) {
-  translateSutraFromImage(image: $image) {
-    originalText
-    iastText
-    extractedText
-    ocrConfidence
-    ocrWarnings
-    words {
-      word
-      meanings
-    }
-    alternativeTranslations
-  }
-}
-```
-
-### TypeScript API
-
-#### TranslationService Interface
-
-```typescript
-interface TranslationService {
-  translate(sutra: string): Promise<TranslationResult>;
-}
-```
-
-#### OcrTranslationService
-
-```typescript
-class OcrTranslationService {
-  async translateFromImage(
-    upload: FileUpload,
-    outputFormat?: 'devanagari' | 'iast'
-  ): Promise<OcrTranslationResult>;
-}
-```
-
-#### Types
-
-```typescript
-interface WordEntry {
-  word: string;
-  meanings: string[];
-}
-
-interface TranslationResult {
-  originalText: string;
-  iastText: string;
-  words: WordEntry[];
-  alternativeTranslations?: string[];
-}
-
-interface OcrTranslationResult extends TranslationResult {
-  ocrConfidence: number;
-  extractedText: string;
-  ocrWarnings?: string[];
-}
-```
-
-## Technology Stack
-
-- **Runtime**: Node.js 20.19.0+
-- **Language**: TypeScript 5.3+
-- **GraphQL Server**: GraphQL Yoga 5.1+
-- **LLM**: Anthropic Claude (via @anthropic-ai/sdk)
-- **Script Conversion**: @indic-transliteration/sanscript
-- **Testing**: Vitest 1.0+
-- **Architecture**: Hexagonal (Ports and Adapters)
-
-## Contributing
-
-This project follows the **ai-pack framework** for structured development:
-
-1. Create task packet: `/ai-pack task-init <task-name>`
-2. Follow TDD workflow: RED → GREEN → REFACTOR
-3. Run tests: `npm test`
-4. Submit for review: `/ai-pack review`
-
-See [CLAUDE.md](./CLAUDE.md) for detailed development guidelines.
+**Low OCR confidence:**
+- Use clear, high-contrast images
+- Ensure text is properly oriented
+- Avoid noisy or low-quality scans
 
 ## License
 
@@ -582,5 +262,6 @@ See [CLAUDE.md](./CLAUDE.md) for detailed development guidelines.
 
 ## Acknowledgments
 
-- Sanskrit transliteration powered by [@indic-transliteration/sanscript](https://github.com/sanskrit-coders/indic_transliteration_py)
-- Translation powered by [Anthropic Claude](https://www.anthropic.com/)
+- Sanskrit transliteration: [@indic-transliteration/sanscript](https://github.com/sanskrit-coders/indic_transliteration_py)
+- Translation: [Anthropic Claude](https://www.anthropic.com/)
+- OCR: [Google Cloud Vision](https://cloud.google.com/vision)
