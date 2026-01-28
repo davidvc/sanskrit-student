@@ -7,3 +7,6 @@ dist/
 # AI-pack monitoring checkpoints
 .claude/.coordination-checkpoint
 .claude/.watchdog-checkpoint
+
+# Beads export state
+.beads/export-state/
