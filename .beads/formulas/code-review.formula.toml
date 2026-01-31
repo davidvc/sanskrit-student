@@ -34,7 +34,7 @@ collected and synthesized into a prioritized, actionable review.
 
 ## Execution Model
 1. Each leg spawns as a separate agent in its own worktree
-2. Polecats work in parallel
+2. Tasks work in parallel
 3. Each writes findings to their designated output
 4. Synthesis step combines all findings into unified review
 """
@@ -128,7 +128,7 @@ directory = ".reviews/{{.review_id}}"
 leg_pattern = "{{.leg.id}}-findings.md"
 synthesis = "review-summary.md"
 
-# Leg definitions - each spawns a parallel polecat
+# Leg definitions - each spawns a parallel task
 [[legs]]
 id = "correctness"
 title = "Correctness Review"
