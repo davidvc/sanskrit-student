@@ -10,6 +10,7 @@ import { SanscriptConverter } from './adapters/sanscript-converter';
 import { OcrTranslationService } from './domain/ocr-translation-service';
 import { MockOcrEngine } from './adapters/mock-ocr-engine';
 import { InMemoryImageStorage } from './adapters/in-memory-image-storage';
+import { ImageValidatorFactory } from './adapters/image-validator-factory';
 
 /**
  * Configuration options for creating the GraphQL server.
@@ -45,10 +46,12 @@ export function createTestConfig(): ServerConfig {
   // Create OCR translation service with mocks
   const mockOcrEngine = new MockOcrEngine();
   const imageStorage = new InMemoryImageStorage();
+  const imageValidator = ImageValidatorFactory.createComposite();
   const ocrTranslationService = new OcrTranslationService(
     mockOcrEngine,
     imageStorage,
-    translationService
+    translationService,
+    imageValidator
   );
 
   return { translationService, ocrTranslationService };
