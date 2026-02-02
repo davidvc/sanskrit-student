@@ -6,7 +6,12 @@ version = 1
 [[steps]]
 id = "criteria"
 title = "Write acceptance criteria for {{feature}}"
-description = """Write acceptance criteria using Gherkin syntax (Given/When/Then).
+description = """FIRST: Create feature folder in docs/features/
+
+Determine the next available feature number (e.g., 001, 002, 003) by checking existing folders in docs/features/.
+Create a new folder: docs/features/[NNN]-{{feature}}/
+
+THEN: Write acceptance criteria using Gherkin syntax (Given/When/Then).
 
 Cover:
 - Happy path scenarios
@@ -14,7 +19,9 @@ Cover:
 - Error conditions
 - User-facing behavior (not implementation details)
 
-Output: A Gherkin feature file or markdown with scenarios."""
+Output location: docs/features/[NNN]-{{feature}}/acceptance-criteria.md
+
+The acceptance criteria file should be in markdown format with Gherkin scenarios in code blocks."""
 
 [[steps]]
 id = "criteria-review"
@@ -50,6 +57,8 @@ id = "design"
 title = "Write high-level design for {{feature}}"
 needs = ["criteria-review"]
 description = """Create high-level design based on approved acceptance criteria.
+
+Output location: docs/features/[NNN]-{{feature}}/high-level-design.md
 
 Include:
 - Architecture overview (how it fits into existing system)
