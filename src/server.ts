@@ -2,15 +2,18 @@ import { createSchema, createYoga } from 'graphql-yoga';
 import { TranslationService } from './domain/translation-service';
 import { LlmTranslationService } from './adapters/llm-translation-service';
 import { NormalizingTranslationService } from './adapters/normalizing-translation-service';
-import { MockLlmClient } from './adapters/mock-llm-client';
+import { LlmClient } from './domain/llm-client';
 import { ClaudeLlmClient } from './adapters/claude-llm-client';
 import { ScriptDetectorImpl } from './domain/script-detector';
 import { ScriptNormalizerImpl } from './domain/script-normalizer';
 import { SanscriptConverter } from './adapters/sanscript-converter';
 import { OcrTranslationService } from './domain/ocr-translation-service';
+import { OcrEngine } from './domain/ocr-engine';
+import { ImageStorageStrategy } from './domain/image-storage-strategy';
+import { ImageValidator } from './domain/image-validator';
+import { ImageValidatorFactory } from './adapters/image-validator-factory';
 import { MockOcrEngine } from './adapters/mock-ocr-engine';
 import { InMemoryImageStorage } from './adapters/in-memory-image-storage';
-import { ImageValidatorFactory } from './adapters/image-validator-factory';
 
 /**
  * Configuration options for creating the GraphQL server.
@@ -33,41 +36,101 @@ function createScriptNormalizer(): ScriptNormalizerImpl {
 }
 
 /**
- * Creates a ServerConfig using MockLlmClient for testing.
- *
- * @returns Configuration with mock translation service
+ * Dependencies that can be injected into the server configuration.
+ * Uses domain interfaces (ports) to allow different implementations.
  */
-export function createTestConfig(): ServerConfig {
-  const llmClient = new MockLlmClient();
-  const baseService = new LlmTranslationService(llmClient);
-  const normalizer = createScriptNormalizer();
-  const translationService = new NormalizingTranslationService(normalizer, baseService);
-
-  // Create OCR translation service with mocks
-  const mockOcrEngine = new MockOcrEngine();
-  const imageStorage = new InMemoryImageStorage();
-  const imageValidator = ImageValidatorFactory.createComposite();
-  const ocrTranslationService = new OcrTranslationService(
-    mockOcrEngine,
-    imageStorage,
-    translationService,
-    imageValidator
-  );
-
-  return { translationService, ocrTranslationService };
+export interface ServerDependencies {
+  llmClient: LlmClient;
+  ocrEngine: OcrEngine;
+  imageStorage: ImageStorageStrategy;
+  imageValidator: ImageValidator;
 }
 
 /**
- * Creates a ServerConfig using ClaudeLlmClient for production.
+ * Factory for creating server configurations with dependency injection.
  *
- * @returns Configuration with Claude-backed translation service
+ * This class is the composition root that wires dependencies together.
+ * Production and test code provide different implementations of the
+ * same domain interfaces.
+ */
+export class ServerConfigFactory {
+  /**
+   * Validates that required dependencies are provided.
+   *
+   * @param deps - Dependencies to validate
+   * @throws Error if required dependencies are null or undefined
+   */
+  private validateDependencies(deps: ServerDependencies): void {
+    if (!deps.llmClient) {
+      throw new Error('llmClient dependency is required but was not provided');
+    }
+
+    if (!deps.ocrEngine) {
+      throw new Error('ocrEngine dependency is required but was not provided');
+    }
+
+    if (!deps.imageStorage) {
+      throw new Error('imageStorage dependency is required but was not provided');
+    }
+
+    if (!deps.imageValidator) {
+      throw new Error('imageValidator dependency is required but was not provided');
+    }
+  }
+
+  /**
+   * Creates a ServerConfig using provided dependencies.
+   *
+   * @param deps - Dependencies to inject (production or test implementations)
+   * @returns Configuration with wired services
+   * @throws Error if required dependencies are missing
+   */
+  create(deps: ServerDependencies): ServerConfig {
+    this.validateDependencies(deps);
+
+    const baseService = new LlmTranslationService(deps.llmClient);
+    const normalizer = createScriptNormalizer();
+    const translationService = new NormalizingTranslationService(normalizer, baseService);
+
+    // Create OCR translation service - all dependencies are required
+    const ocrTranslationService = new OcrTranslationService(
+      deps.ocrEngine,
+      deps.imageStorage,
+      translationService,
+      deps.imageValidator
+    );
+
+    return { translationService, ocrTranslationService };
+  }
+}
+
+/**
+ * Convenience function that uses ServerConfigFactory internally.
+ *
+ * @param deps - Dependencies to inject (production or test implementations)
+ * @returns Configuration with wired services
+ * @throws Error if required dependencies are missing
+ */
+export function createConfig(deps: ServerDependencies): ServerConfig {
+  const factory = new ServerConfigFactory();
+  return factory.create(deps);
+}
+
+/**
+ * Creates a ServerConfig for production.
+ * This is the composition root for production - creates real dependencies.
+ *
+ * @returns Complete server configuration with all services (translation and OCR)
  */
 export function createProductionConfig(): ServerConfig {
-  const llmClient = new ClaudeLlmClient();
-  const baseService = new LlmTranslationService(llmClient);
-  const normalizer = createScriptNormalizer();
-  const translationService = new NormalizingTranslationService(normalizer, baseService);
-  return { translationService };
+  const deps: ServerDependencies = {
+    llmClient: new ClaudeLlmClient(),
+    // TODO: Replace with production OCR implementation when available
+    ocrEngine: new MockOcrEngine(),
+    imageStorage: new InMemoryImageStorage(),
+    imageValidator: ImageValidatorFactory.createComposite(),
+  };
+  return createConfig(deps);
 }
 
 /**
