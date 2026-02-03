@@ -433,6 +433,19 @@ npx eas build --platform android --auto-submit
 - Add skeleton screens for loading states
 - Optimize font loading (subset Devanagari glyphs)
 
+## Testing
+
+See comprehensive testing strategy:
+- **Full Design**: [front-end-test-design.md](./front-end-test-design.md)
+- **AI Quick Reference**: [front-end-test-design-for-ai.md](./front-end-test-design-for-ai.md)
+
+**Key principles**:
+- Acceptance tests only (test public contract)
+- Complete isolation (mock all external dependencies)
+- Given/When/Then format (align with acceptance criteria)
+- DSL helpers (extract reusable test code)
+- TDD workflow (RED-GREEN-REFACTOR)
+
 ## References
 
 - [Expo Documentation](https://docs.expo.dev/)
@@ -442,9 +455,10 @@ npx eas build --platform android --auto-submit
 - [NativeWind](https://www.nativewind.dev/)
 - [GraphQL Code Generator](https://the-guild.dev/graphql/codegen)
 
-## Related ADRs
+## Related Documentation
 
 - [ADR-0002: Universal React Native Frontend](../adr/0002-universal-react-native-frontend.md)
+- [Frontend Test Design](./front-end-test-design.md)
 
 ---
 
