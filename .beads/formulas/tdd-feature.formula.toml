@@ -58,6 +58,22 @@ title = "Write high-level design for {{feature}}"
 needs = ["criteria-review"]
 description = """Create high-level design based on approved acceptance criteria.
 
+FIRST: Scan existing design decisions and architecture patterns
+-------------------------------------------------------------------
+Before creating the design, review existing architectural guidance:
+
+1. Scan docs/adr/ for Architecture Decision Records (ADRs)
+   - Look for patterns, constraints, and conventions
+   - Identify relevant decisions that apply to this feature
+   - Note any architectural principles to follow
+
+2. Scan docs/architecture/ for architecture documentation
+   - Review system architecture diagrams and patterns
+   - Understand existing component boundaries
+   - Identify integration points and dependencies
+
+3. Apply discovered patterns and decisions to the design
+
 Output location: docs/features/[NNN]-{{feature}}/high-level-design.md
 
 Include:
@@ -68,6 +84,7 @@ Include:
 - Dependencies
 - Risks and mitigations
 - Implementation plan using RED-GREEN-REFACTOR TDD cycles
+- References to relevant ADRs and architecture docs
 
 Keep it high-level - implementation details come during TDD.
 
@@ -203,9 +220,22 @@ D. Spawn REFACTOR subagent using Task tool:
         * Error handling patterns
         * Code comments where needed (especially for complex logic)
       - Run test → Verify STILL PASSES (green)
+
+   3. Stage changes for OCR review:
+      - Stage all changes in the worktree:
+        git add -A
+
+   4. Run OCR code review:
+      - Execute the OCR review using the Skill tool:
+        Skill(skill="ocr:review")
+      - Review the findings and recommendations
+      - Apply the recommendations from the OCR review
+      - Ensure test still passes after applying recommendations
+
+   5. Commit refactored code:
       - Commit: "REFACTOR: AC[N] - [description]"
 
-   3. Close bead:
+   6. Close bead:
       bd update [bead-id] --status closed
 
    CRITICAL RULES:
@@ -214,6 +244,7 @@ D. Spawn REFACTOR subagent using Task tool:
    - If refactor breaks test, fix it before closing
    - All coding guidelines must be followed
    - Reference .ai-pack/quality/ for standards
+   - OCR review is mandatory - must run and apply recommendations
    ''')
 
 E. Wait for REFACTOR subagent to complete
