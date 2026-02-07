@@ -78,17 +78,23 @@ npm run translate -- --mock "om"
 
 ### Translate from Image (GraphQL API)
 
-1. **Start the server**
+1. **Start the GraphQL server**
 
 ```bash
-# Production (requires API keys)
-node dist/server.js
+# Development mode (with TypeScript hot reload)
+npm run dev
 
-# Testing with mock data
-node dist/server.js --mock
+# Development with mock data (no API keys needed)
+npm run dev -- --mock
+
+# Production mode
+npm run build
+npm start
 ```
 
 Server runs at: `http://localhost:4000/graphql`
+
+The server automatically uses mock mode if `ANTHROPIC_API_KEY` is not set in your `.env` file.
 
 2. **Upload image via GraphQL**
 
