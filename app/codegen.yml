@@ -1,0 +1,24 @@
+overwrite: true
+schema: "http://localhost:4000/graphql"
+documents: "**/*.graphql"
+generates:
+  ./lib/graphql/generated.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typed-document-node"
+    config:
+      strictScalars: true
+      scalars:
+        DateTime: string
+      skipTypename: false
+      withHooks: false
+      withComponent: false
+      withHOC: false
+      enumsAsTypes: true
+      constEnums: true
+      futureProofEnums: true
+      dedupeFragments: true
+      inlineFragmentTypes: "combine"
+      skipDocumentsValidation: false
+      useTypeImports: true
