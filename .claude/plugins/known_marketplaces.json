@@ -1,0 +1,10 @@
+{
+  "aclarify": {
+    "source": {
+      "source": "github",
+      "repo": "spencermarx/open-code-review"
+    },
+    "installLocation": "/Users/dvancouvering/.claude/plugins/marketplaces/aclarify",
+    "lastUpdated": "2026-02-02T23:52:59.909Z"
+  }
+}

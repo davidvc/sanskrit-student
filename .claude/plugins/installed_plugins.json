@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "plugins": {
+    "ocr@aclarify": [
+      {
+        "scope": "user",
+        "installPath": "/Users/dvancouvering/.claude/plugins/cache/aclarify/ocr/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-02-02T23:53:17.159Z",
+        "lastUpdated": "2026-02-02T23:53:17.159Z",
+        "gitCommitSha": "0a26a717ae422f4036447a8c972c215cf090f5fa"
+      }
+    ]
+  }
+}

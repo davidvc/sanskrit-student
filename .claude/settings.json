@@ -1,83 +1,13 @@
+
 {
-  "description": "AI-Pack Framework Configuration for Claude Code",
-  "_comment_permissions": "defaultMode: bypassPermissions enables auto-approval for both foreground and background agents. Auto-approved: Write, Edit, safe Bash commands, safe git operations (pull/fetch/status/diff/log/branch/checkout), build/test tools. Require approval: git commit/push/merge, rm, destructive operations.",
-  "permissions": {
-    "allow": [
-      "Write(*)",
-      "Edit(*)",
-      "Bash(mkdir:*)",
-      "Bash(cp:*)",
-      "Bash(mv:*)",
-      "Bash(ls:*)",
-      "Bash(cat:*)",
-      "Bash(pwd:*)",
-      "Bash(echo:*)",
-      "Bash(which:*)",
-      "Bash(test:*)",
-      "Bash(tail:*)",
-      "Bash(git pull:*)",
-      "Bash(git fetch:*)",
-      "Bash(git status:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(git branch:*)",
-      "Bash(git checkout:*)",
-      "Bash(cd:*)",
-      "Bash(npm:*)",
-      "Bash(dotnet:*)",
-      "Bash(jest:*)",
-      "Bash(pytest:*)",
-      "Bash(tsc:*)",
-      "Bash(cargo:*)",
-      "Bash(go:*)",
-      "Bash(gradle:*)",
-      "Bash(mvn:*)",
-      "Bash(node:*)",
-      "Bash(python:*)",
-      "Bash(python3:*)"
-    ],
-    "deny": [
-      "Bash(rm -rf /*)",
-      "Bash(rm -rf ~/*)",
-      "Bash(rm -rf ./*)",
-      "Bash(rm -fr *)",
-      "Bash(git push --force*)",
-      "Bash(git push -f *)",
-      "Bash(git reset --hard origin/*)",
-      "Bash(sudo rm*)",
-      "Bash(sudo chmod*)",
-      "Bash(sudo chown*)",
-      "Bash(chmod 777*)",
-      "Bash(chmod -R 777*)",
-      "Bash(dd if=*)",
-      "Bash(mkfs.*)",
-      "Bash(fdisk*)",
-      "Bash(> /dev/*)"
-    ],
-    "defaultMode": "acceptEdits"
-  },
-  "hooks": {
-    "SessionStart": [
-      {
-        "description": "Start ai-pack monitoring timers (coordination + watchdog)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 /Users/dvancouvering/projects/sanskrit-student/.claude/hooks/session-start.py"
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "description": "Stop ai-pack monitoring timers",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 /Users/dvancouvering/projects/sanskrit-student/.claude/hooks/session-end.py"
-          }
-        ]
-      }
-    ]
+  "apiKeyHelper": "npx @ebay/claude-code-token@latest get_token",
+  "env": {
+    "ANTHROPIC_MODEL": "hubgpt-chat-completions-claude-sonnet-4-5",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "hubgpt-chat-completions-claude-sonnet-4-5",
+    "ANTHROPIC_SMALL_FAST_MODEL": "hubgpt-chat-completions-claude-sonnet-4-5",
+    "ANTHROPIC_BASE_URL": "https://platformgateway2.vip.ebay.com/hubgptgatewaysvc/v1/anthropic",
+    "CLAUDE_CODE_API_KEY_HELPER_TTL_MS": "360000000",
+    "DISABLE_TELEMETRY": "1",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   }
 }
