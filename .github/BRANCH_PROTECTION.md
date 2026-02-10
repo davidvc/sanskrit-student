@@ -34,6 +34,8 @@ After creating your first PR, the workflow will run automatically. You should se
 - A "PR Tests" check appear on the PR
 - The check must pass (green) before the "Merge" button becomes available
 
+**Note:** After the first workflow run completes, you'll need to edit the branch protection rule to add `test` to the required status checks list.
+
 ## Workflow Details
 
 The workflow (`pr-tests.yml`) runs on every PR to `main` and performs:
