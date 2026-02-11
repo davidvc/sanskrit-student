@@ -271,3 +271,4 @@ Now image uploads will use Google Cloud Vision for real OCR!
 - Sanskrit transliteration: [@indic-transliteration/sanscript](https://github.com/sanskrit-coders/indic_transliteration_py)
 - Translation: [Anthropic Claude](https://www.anthropic.com/)
 - OCR: [Google Cloud Vision](https://cloud.google.com/vision)
+
