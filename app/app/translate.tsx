@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { TRANSLATE_SUTRA_QUERY } from '../graphql/queries/translateSutra';
 
 export default function Translate() {
