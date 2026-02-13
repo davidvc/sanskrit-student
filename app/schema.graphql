@@ -1,0 +1,43 @@
+"""Exposes a URL that specifies the behavior of this scalar."""
+directive @specifiedBy(
+  """The URL that specifies the behavior of this scalar."""
+  url: String!
+) on SCALAR
+
+"""
+Indicates exactly one field must be supplied and this field must not be `null`.
+"""
+directive @oneOf on INPUT_OBJECT
+
+type Mutation {
+  translateSutraFromImage(image: Upload!): OcrTranslationResult!
+}
+
+type OcrTranslationResult {
+  originalText: [String!]!
+  iastText: [String!]!
+  words: [WordEntry!]!
+  alternativeTranslations: [String!]
+  ocrConfidence: Float!
+  extractedText: String!
+  ocrWarnings: [String!]
+}
+
+type Query {
+  translateSutra(sutra: String!): TranslationResult
+}
+
+type TranslationResult {
+  originalText: [String!]!
+  iastText: [String!]!
+  words: [WordEntry!]!
+  alternativeTranslations: [String!]
+}
+
+scalar Upload
+
+type WordEntry {
+  word: String!
+  meanings: [String!]!
+}
+

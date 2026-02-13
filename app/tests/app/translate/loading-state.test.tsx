@@ -2,7 +2,7 @@ import { describe, it, expect } from '@jest/globals';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react-native';
 import { MockedProvider } from '@apollo/client/testing';
 import TranslateScreen from '../../../app/translate';
-import { TRANSLATE_SUTRA_QUERY } from '../../../graphql/queries/translateSutra';
+import { TranslateSutraDocument } from '../../../lib/graphql/generated';
 
 describe('Scenario: Loading state during translation', () => {
   it('displays loading indicator and disables button during translation', async () => {
@@ -10,7 +10,7 @@ describe('Scenario: Loading state during translation', () => {
     const mocks = [
       {
         request: {
-          query: TRANSLATE_SUTRA_QUERY,
+          query: TranslateSutraDocument,
           variables: { sutra: 'om' },
         },
         result: {

@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import { MockedProvider } from '@apollo/client/testing';
 import * as Clipboard from 'expo-clipboard';
 import TranslateScreen from '../../../app/translate';
-import { TRANSLATE_SUTRA_QUERY } from '../../../graphql/queries/translateSutra';
+import { TranslateSutraDocument } from '../../../lib/graphql/generated';
 
 // Mock expo-clipboard
 jest.mock('expo-clipboard', () => ({
@@ -17,7 +17,7 @@ describe('Scenario: Copy translation results to clipboard', () => {
     const mocks = [
       {
         request: {
-          query: TRANSLATE_SUTRA_QUERY,
+          query: TranslateSutraDocument,
           variables: { sutra: 'atha yoganusasanam' },
         },
         result: {

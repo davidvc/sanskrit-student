@@ -2,7 +2,7 @@ import { describe, it, expect } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { MockedProvider } from '@apollo/client/testing';
 import TranslateScreen from '../../../app/translate';
-import { TRANSLATE_SUTRA_QUERY } from '../../../graphql/queries/translateSutra';
+import { TranslateSutraDocument } from '../../../lib/graphql/generated';
 
 /**
  * AC10: Alternative translation display
@@ -20,7 +20,7 @@ describe('Scenario: Alternative translation display', () => {
     const mocks = [
       {
         request: {
-          query: TRANSLATE_SUTRA_QUERY,
+          query: TranslateSutraDocument,
           variables: { sutra: 'atha yoganusasanam' },
         },
         result: {
@@ -88,7 +88,7 @@ describe('Scenario: Alternative translation display', () => {
     const mocks = [
       {
         request: {
-          query: TRANSLATE_SUTRA_QUERY,
+          query: TranslateSutraDocument,
           variables: { sutra: 'om' },
         },
         result: {
@@ -138,7 +138,7 @@ describe('Scenario: Alternative translation display', () => {
     const mocks = [
       {
         request: {
-          query: TRANSLATE_SUTRA_QUERY,
+          query: TranslateSutraDocument,
           variables: { sutra: 'test' },
         },
         result: {
@@ -196,7 +196,7 @@ describe('Scenario: Alternative translation display', () => {
     const mocks = [
       {
         request: {
-          query: TRANSLATE_SUTRA_QUERY,
+          query: TranslateSutraDocument,
           variables: { sutra: 'test' },
         },
         result: {
