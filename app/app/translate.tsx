@@ -6,6 +6,7 @@ import { TRANSLATE_SUTRA_QUERY } from '../graphql/queries/translateSutra';
 export default function Translate() {
   const [inputText, setInputText] = useState('');
   const [sutraToTranslate, setSutraToTranslate] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const { data, loading, error } = useQuery(TRANSLATE_SUTRA_QUERY, {
     variables: { sutra: sutraToTranslate },
@@ -13,8 +14,11 @@ export default function Translate() {
   });
 
   const handleTranslate = () => {
+    setValidationError(null);
     if (inputText.trim()) {
       setSutraToTranslate(inputText);
+    } else {
+      setValidationError('Please enter Sanskrit text to translate');
     }
   };
 
@@ -38,6 +42,7 @@ export default function Translate() {
       </View>
 
       {loading && <Text style={styles.loading}>Loading...</Text>}
+      {validationError && <Text style={styles.error}>{validationError}</Text>}
       {error && <Text style={styles.error}>Error: {error.message}</Text>}
 
       {data?.translateSutra && (
