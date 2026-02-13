@@ -5,20 +5,37 @@ import { GraphQLError } from 'graphql';
 import TranslateScreen from '../../../app/translate';
 import { TRANSLATE_SUTRA_QUERY } from '../../../graphql/queries/translateSutra';
 
+const createTranslateMock = (sutra: string, data: any) => ({
+  request: {
+    query: TRANSLATE_SUTRA_QUERY,
+    variables: { sutra },
+  },
+  result: {
+    data: {
+      translateSutra: {
+        __typename: 'Translation',
+        ...data,
+      },
+    },
+  },
+});
+
+const createErrorMock = (sutra: string, errorMessage: string) => ({
+  request: {
+    query: TRANSLATE_SUTRA_QUERY,
+    variables: { sutra },
+  },
+  error: new Error(errorMessage),
+});
+
 describe('Scenario: Server error handling', () => {
   it('displays error message and allows retry when server returns error', async () => {
     // GIVEN: I am on the translation frontend page
     // AND: the GraphQL server returns an error
-    const errorMock = {
-      request: {
-        query: TRANSLATE_SUTRA_QUERY,
-        variables: { sutra: 'om' },
-      },
-      error: new Error('Network error: Failed to fetch'),
-    };
+    const errorMock = createErrorMock('om', 'Network error: Failed to fetch');
 
     render(
-      <MockedProvider mocks={[errorMock]} addTypename={false}>
+      <MockedProvider mocks={[errorMock]}>
         <TranslateScreen />
       </MockedProvider>
     );
@@ -57,7 +74,7 @@ describe('Scenario: Server error handling', () => {
     };
 
     render(
-      <MockedProvider mocks={[graphQLErrorMock]} addTypename={false}>
+      <MockedProvider mocks={[graphQLErrorMock]}>
         <TranslateScreen />
       </MockedProvider>
     );
@@ -84,38 +101,22 @@ describe('Scenario: Server error handling', () => {
 
   it('clears error message on successful retry', async () => {
     // GIVEN: I have received an error
-    const errorMock = {
-      request: {
-        query: TRANSLATE_SUTRA_QUERY,
-        variables: { sutra: 'om' },
-      },
-      error: new Error('Network error: Failed to fetch'),
-    };
+    const errorMock = createErrorMock('om', 'Network error: Failed to fetch');
 
-    const successMock = {
-      request: {
-        query: TRANSLATE_SUTRA_QUERY,
-        variables: { sutra: 'namaste' },
-      },
-      result: {
-        data: {
-          translateSutra: {
-            originalText: ['namaste'],
-            iastText: ['namaste'],
-            words: [
-              {
-                word: 'namaste',
-                meanings: ['I bow to you'],
-              },
-            ],
-            alternativeTranslations: [],
-          },
+    const successMock = createTranslateMock('namaste', {
+      originalText: ['namaste'],
+      iastText: ['namaste'],
+      words: [
+        {
+          word: 'namaste',
+          meanings: ['I bow to you'],
         },
-      },
-    };
+      ],
+      alternativeTranslations: [],
+    });
 
     render(
-      <MockedProvider mocks={[errorMock, successMock]} addTypename={false}>
+      <MockedProvider mocks={[errorMock, successMock]}>
         <TranslateScreen />
       </MockedProvider>
     );
