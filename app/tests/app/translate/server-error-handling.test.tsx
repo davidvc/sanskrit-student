@@ -3,11 +3,11 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import { MockedProvider } from '@apollo/client/testing';
 import { GraphQLError } from 'graphql';
 import TranslateScreen from '../../../app/translate';
-import { TRANSLATE_SUTRA_QUERY } from '../../../graphql/queries/translateSutra';
+import { TranslateSutraDocument } from '../../../lib/graphql/generated';
 
 const createTranslateMock = (sutra: string, data: any) => ({
   request: {
-    query: TRANSLATE_SUTRA_QUERY,
+    query: TranslateSutraDocument,
     variables: { sutra },
   },
   result: {
@@ -22,7 +22,7 @@ const createTranslateMock = (sutra: string, data: any) => ({
 
 const createErrorMock = (sutra: string, errorMessage: string) => ({
   request: {
-    query: TRANSLATE_SUTRA_QUERY,
+    query: TranslateSutraDocument,
     variables: { sutra },
   },
   error: new Error(errorMessage),
@@ -65,7 +65,7 @@ describe('Scenario: Server error handling', () => {
     // GIVEN: the GraphQL server returns a GraphQL error
     const graphQLErrorMock = {
       request: {
-        query: TRANSLATE_SUTRA_QUERY,
+        query: TranslateSutraDocument,
         variables: { sutra: 'invalid text' },
       },
       result: {

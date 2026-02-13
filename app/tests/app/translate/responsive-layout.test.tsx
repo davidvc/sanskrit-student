@@ -2,14 +2,14 @@ import { describe, it, expect } from '@jest/globals';
 import { render } from '@testing-library/react-native';
 import { MockedProvider } from '@apollo/client/testing';
 import TranslateScreen from '../../../app/translate';
-import { TRANSLATE_SUTRA_QUERY } from '../../../graphql/queries/translateSutra';
+import { TranslateSutraDocument } from '../../../lib/graphql/generated';
 
 describe('Scenario: Responsive layout', () => {
   it('should display a layout optimized for mobile viewing with accessible controls and readable text', () => {
     // GIVEN: I access the translation page on a mobile device
     const mock = {
       request: {
-        query: TRANSLATE_SUTRA_QUERY,
+        query: TranslateSutraDocument,
         variables: { sutra: 'namaste' },
       },
       result: {

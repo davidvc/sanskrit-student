@@ -1,0 +1,11 @@
+query TranslateSutra($sutra: String!) {
+  translateSutra(sutra: $sutra) {
+    originalText
+    iastText
+    words {
+      word
+      meanings
+    }
+    alternativeTranslations
+  }
+}

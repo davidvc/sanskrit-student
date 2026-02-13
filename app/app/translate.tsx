@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Text, ScrollView, StyleSheet } from 'react-native';
-import { useQuery } from '@apollo/client';
 import * as Clipboard from 'expo-clipboard';
-import { TRANSLATE_SUTRA_QUERY } from '../graphql/queries/translateSutra';
+import { useTranslateSutraQuery } from '../lib/graphql/generated';
 import SutraInput from '../components/translation/SutraInput';
 import TranslationResult from '../components/translation/TranslationResult';
 
@@ -13,8 +12,8 @@ export default function Translate() {
   const [shouldShowResults, setShouldShowResults] = useState(false);
   const [copyConfirmation, setCopyConfirmation] = useState(false);
 
-  const { data, loading, error } = useQuery(TRANSLATE_SUTRA_QUERY, {
-    variables: { sutra: sutraToTranslate },
+  const { data, loading, error } = useTranslateSutraQuery({
+    variables: { sutra: sutraToTranslate || '' },
     skip: !sutraToTranslate,
     onCompleted: () => {
       setShouldShowResults(true);
