@@ -32,9 +32,17 @@ export default function Translate() {
 
   const handleCopyIast = async () => {
     if (data?.translateSutra?.iastText) {
-      const iastText = data.translateSutra.iastText.join('\n');
-      await Clipboard.setStringAsync(iastText);
-      setCopyConfirmation(true);
+      try {
+        const iastText = data.translateSutra.iastText.join('\n');
+        await Clipboard.setStringAsync(iastText);
+        setCopyConfirmation(true);
+
+        // Auto-hide confirmation after 3 seconds
+        setTimeout(() => setCopyConfirmation(false), 3000);
+      } catch (error) {
+        // Silently fail - clipboard operations can fail in some environments
+        console.error('Failed to copy to clipboard:', error);
+      }
     }
   };
 
@@ -84,6 +92,8 @@ export default function Translate() {
                 style={styles.copyButton}
                 onPress={handleCopyIast}
                 testID="copy-iast-button"
+                accessibilityLabel="Copy IAST text to clipboard"
+                accessibilityRole="button"
               >
                 <Text style={styles.copyButtonText}>Copy</Text>
               </Pressable>
