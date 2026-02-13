@@ -125,7 +125,7 @@ export default function Translate() {
            data.translateSutra.alternativeTranslations.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Alternative Translations:</Text>
-              {data.translateSutra.alternativeTranslations.map((alt: string, index: number) => (
+              {data.translateSutra.alternativeTranslations.slice(0, 3).map((alt: string, index: number) => (
                 <Text key={`alt-${index}`} style={styles.text}>
                   {alt}
                 </Text>
