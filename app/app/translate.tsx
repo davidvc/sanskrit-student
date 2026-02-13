@@ -36,6 +36,8 @@ export default function Translate() {
           style={styles.button}
           onPress={handleTranslate}
           disabled={loading}
+          accessibilityState={{ disabled: loading }}
+          testID="translate-button"
         >
           <Text style={styles.buttonText}>Translate</Text>
         </Pressable>

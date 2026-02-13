@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react-native';
 import { MockedProvider } from '@apollo/client/testing';
 import TranslateScreen from '../../../app/translate';
 import { TRANSLATE_SUTRA_QUERY } from '../../../graphql/queries/translateSutra';
@@ -44,7 +44,7 @@ describe('Scenario: Loading state during translation', () => {
     fireEvent.changeText(input, 'om');
 
     // AND: I click the "Translate" button
-    const translateButton = screen.getByText(/translate/i);
+    const translateButton = screen.getByTestId('translate-button');
     fireEvent.press(translateButton);
 
     // THEN: I should see a loading indicator
@@ -53,21 +53,23 @@ describe('Scenario: Loading state during translation', () => {
     });
 
     // AND: the "Translate" button should be disabled
-    // In React Native, disabled state is in accessibilityState
-    const buttonParent = translateButton.parent;
-    expect(buttonParent?.props.accessibilityState?.disabled).toBe(true);
+    // Check using the accessibility state matcher
+    await waitFor(() => {
+      const button = screen.getByTestId('translate-button');
+      // The button should have disabled in its accessibilityState
+      expect(button).toHaveAccessibilityState({ disabled: true });
+    });
 
     // WHEN: the translation completes
     await waitFor(() => {
-      expect(screen.getByText('oṃ')).toBeTruthy();
+      expect(screen.getAllByText('oṃ').length).toBeGreaterThan(0);
     });
 
     // THEN: the loading indicator should disappear
     expect(screen.queryByText(/loading/i)).toBeNull();
 
     // AND: the "Translate" button should be enabled
-    const translateButtonAfterComplete = screen.getByText(/translate/i);
-    const buttonParentAfterComplete = translateButtonAfterComplete.parent;
-    expect(buttonParentAfterComplete?.props.accessibilityState?.disabled).not.toBe(true);
+    const translateButtonAfterComplete = screen.getByTestId('translate-button');
+    expect(translateButtonAfterComplete).toHaveAccessibilityState({ disabled: false });
   });
 });
