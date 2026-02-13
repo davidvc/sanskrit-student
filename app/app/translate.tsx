@@ -7,14 +7,19 @@ export default function Translate() {
   const [inputText, setInputText] = useState('');
   const [sutraToTranslate, setSutraToTranslate] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [shouldShowResults, setShouldShowResults] = useState(false);
 
   const { data, loading, error } = useQuery(TRANSLATE_SUTRA_QUERY, {
     variables: { sutra: sutraToTranslate },
     skip: !sutraToTranslate,
+    onCompleted: () => {
+      setShouldShowResults(true);
+    },
   });
 
   const handleTranslate = () => {
     setValidationError(null);
+    setShouldShowResults(false); // Clear previous results immediately
     if (inputText.trim()) {
       setSutraToTranslate(inputText);
     } else {
@@ -47,7 +52,7 @@ export default function Translate() {
       {validationError && <Text style={styles.error}>{validationError}</Text>}
       {error && <Text style={styles.error}>Error: {error.message}</Text>}
 
-      {data?.translateSutra && (
+      {shouldShowResults && data?.translateSutra && (
         <View style={styles.resultsContainer}>
           {/* Original Text */}
           <View style={styles.section}>
