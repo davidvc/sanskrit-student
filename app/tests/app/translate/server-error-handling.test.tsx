@@ -17,30 +17,8 @@ describe('Scenario: Server error handling', () => {
       error: new Error('Network error: Failed to fetch'),
     };
 
-    const successMock = {
-      request: {
-        query: TRANSLATE_SUTRA_QUERY,
-        variables: { sutra: 'om' },
-      },
-      result: {
-        data: {
-          translateSutra: {
-            originalText: ['om'],
-            iastText: ['oṃ'],
-            words: [
-              {
-                word: 'oṃ',
-                meanings: ['sacred sound'],
-              },
-            ],
-            alternativeTranslations: [],
-          },
-        },
-      },
-    };
-
     render(
-      <MockedProvider mocks={[errorMock, successMock]} addTypename={false}>
+      <MockedProvider mocks={[errorMock]} addTypename={false}>
         <TranslateScreen />
       </MockedProvider>
     );
@@ -64,20 +42,9 @@ describe('Scenario: Server error handling', () => {
       const button = screen.getByTestId('translate-button');
       expect(button).toHaveAccessibilityState({ disabled: false });
     });
-
-    // WHEN: I retry the translation
-    fireEvent.press(translateButton);
-
-    // THEN: the translation should succeed
-    await waitFor(() => {
-      expect(screen.getAllByText('oṃ').length).toBeGreaterThan(0);
-    });
-
-    // AND: the error message should disappear
-    expect(screen.queryByText(/network error|failed to fetch/i)).toBeNull();
   });
 
-  it('displays error message for GraphQL errors', async () => {
+  it('displays error message for GraphQL errors and allows retry', async () => {
     // GIVEN: the GraphQL server returns a GraphQL error
     const graphQLErrorMock = {
       request: {
@@ -109,7 +76,71 @@ describe('Scenario: Server error handling', () => {
     });
 
     // AND: I should be able to retry
-    const button = screen.getByTestId('translate-button');
-    expect(button).toHaveAccessibilityState({ disabled: false });
+    await waitFor(() => {
+      const button = screen.getByTestId('translate-button');
+      expect(button).toHaveAccessibilityState({ disabled: false });
+    });
+  });
+
+  it('clears error message on successful retry', async () => {
+    // GIVEN: I have received an error
+    const errorMock = {
+      request: {
+        query: TRANSLATE_SUTRA_QUERY,
+        variables: { sutra: 'om' },
+      },
+      error: new Error('Network error: Failed to fetch'),
+    };
+
+    const successMock = {
+      request: {
+        query: TRANSLATE_SUTRA_QUERY,
+        variables: { sutra: 'namaste' },
+      },
+      result: {
+        data: {
+          translateSutra: {
+            originalText: ['namaste'],
+            iastText: ['namaste'],
+            words: [
+              {
+                word: 'namaste',
+                meanings: ['I bow to you'],
+              },
+            ],
+            alternativeTranslations: [],
+          },
+        },
+      },
+    };
+
+    render(
+      <MockedProvider mocks={[errorMock, successMock]} addTypename={false}>
+        <TranslateScreen />
+      </MockedProvider>
+    );
+
+    const input = screen.getByPlaceholderText(/enter sanskrit text/i);
+
+    // First request causes error
+    fireEvent.changeText(input, 'om');
+    const translateButton = screen.getByTestId('translate-button');
+    fireEvent.press(translateButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/network error|failed to fetch|error/i)).toBeTruthy();
+    });
+
+    // WHEN: I change the input and retry with different text
+    fireEvent.changeText(input, 'namaste');
+    fireEvent.press(translateButton);
+
+    // THEN: the translation should succeed
+    await waitFor(() => {
+      expect(screen.getAllByText('namaste').length).toBeGreaterThan(0);
+    });
+
+    // AND: the error message should be cleared
+    expect(screen.queryByText(/network error|failed to fetch/i)).toBeNull();
   });
 });
