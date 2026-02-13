@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useQuery } from '@apollo/client';
+import * as Clipboard from 'expo-clipboard';
 import { TRANSLATE_SUTRA_QUERY } from '../graphql/queries/translateSutra';
 
 export default function Translate() {
@@ -8,6 +9,7 @@ export default function Translate() {
   const [sutraToTranslate, setSutraToTranslate] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [shouldShowResults, setShouldShowResults] = useState(false);
+  const [copyConfirmation, setCopyConfirmation] = useState(false);
 
   const { data, loading, error } = useQuery(TRANSLATE_SUTRA_QUERY, {
     variables: { sutra: sutraToTranslate },
@@ -20,10 +22,27 @@ export default function Translate() {
   const handleTranslate = () => {
     setValidationError(null);
     setShouldShowResults(false); // Clear previous results immediately
+    setCopyConfirmation(false); // Clear copy confirmation
     if (inputText.trim()) {
       setSutraToTranslate(inputText);
     } else {
       setValidationError('Please enter Sanskrit text to translate');
+    }
+  };
+
+  const handleCopyIast = async () => {
+    if (data?.translateSutra?.iastText) {
+      try {
+        const iastText = data.translateSutra.iastText.join('\n');
+        await Clipboard.setStringAsync(iastText);
+        setCopyConfirmation(true);
+
+        // Auto-hide confirmation after 3 seconds
+        setTimeout(() => setCopyConfirmation(false), 3000);
+      } catch (error) {
+        // Silently fail - clipboard operations can fail in some environments
+        console.error('Failed to copy to clipboard:', error);
+      }
     }
   };
 
@@ -51,6 +70,7 @@ export default function Translate() {
       {loading && <Text style={styles.loading}>Loading...</Text>}
       {validationError && <Text style={styles.error}>{validationError}</Text>}
       {error && <Text style={styles.error}>Error: {error.message}</Text>}
+      {copyConfirmation && <Text style={styles.success}>Copied to clipboard</Text>}
 
       {shouldShowResults && data?.translateSutra && (
         <View style={styles.resultsContainer}>
@@ -66,7 +86,18 @@ export default function Translate() {
 
           {/* IAST Text */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>IAST:</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>IAST:</Text>
+              <Pressable
+                style={styles.copyButton}
+                onPress={handleCopyIast}
+                testID="copy-iast-button"
+                accessibilityLabel="Copy IAST text to clipboard"
+                accessibilityRole="button"
+              >
+                <Text style={styles.copyButtonText}>Copy</Text>
+              </Pressable>
+            </View>
             {data.translateSutra.iastText.map((line: string, index: number) => (
               <Text key={`iast-${index}`} style={styles.text}>
                 {line}
@@ -146,16 +177,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#ff0000',
   },
+  success: {
+    textAlign: 'center',
+    padding: 16,
+    fontSize: 16,
+    color: '#00aa00',
+  },
   resultsContainer: {
     marginTop: 16,
   },
   section: {
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 8,
+  },
+  copyButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  copyButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   text: {
     fontSize: 16,
