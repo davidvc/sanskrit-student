@@ -1,4 +1,4 @@
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import OriginalText from './OriginalText';
 import IastText from './IastText';
 import WordBreakdown from './WordBreakdown';
@@ -11,7 +11,7 @@ interface TranslationData {
     word: string;
     meanings: string[];
   }>;
-  alternativeTranslations?: string[];
+  alternativeTranslations?: string[] | null;
 }
 
 interface TranslationResultProps {
@@ -21,7 +21,7 @@ interface TranslationResultProps {
 
 export default function TranslationResult({ data, onCopyIast }: TranslationResultProps) {
   return (
-    <View style={styles.resultsContainer}>
+    <View className="mt-4">
       <OriginalText lines={data.originalText} />
       <IastText lines={data.iastText} onCopy={onCopyIast} />
       <WordBreakdown words={data.words} />
@@ -29,9 +29,3 @@ export default function TranslationResult({ data, onCopyIast }: TranslationResul
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  resultsContainer: {
-    marginTop: 16,
-  },
-});

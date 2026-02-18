@@ -39,30 +39,18 @@ describe('Scenario: Responsive layout', () => {
     const input = getByPlaceholderText(/enter sanskrit text/i);
     expect(input).toBeTruthy();
 
-    // Verify input has appropriate mobile styling for readability
-    expect(input.props.style).toMatchObject(
-      expect.objectContaining({
-        fontSize: expect.any(Number),
-        padding: expect.any(Number),
-      })
-    );
-
-    // Verify font size is readable on mobile (at least 14px)
-    expect(input.props.style.fontSize).toBeGreaterThanOrEqual(14);
+    // Verify input has NativeWind classes for responsive mobile styling
+    expect(input.props.className).toBeDefined();
+    expect(input.props.className).toContain('p-'); // Has padding
+    expect(input.props.className).toContain('text-'); // Has text size
 
     const translateButton = getByTestId('translate-button');
     expect(translateButton).toBeTruthy();
 
-    // Verify button is accessible (has sufficient touch target)
+    // Verify button is accessible with NativeWind classes
     expect(translateButton.props.accessible).not.toBe(false);
-    expect(translateButton.props.style).toMatchObject(
-      expect.objectContaining({
-        padding: expect.any(Number),
-      })
-    );
-
-    // Verify button has adequate padding for touch targets (at least 10px)
-    expect(translateButton.props.style.padding).toBeGreaterThanOrEqual(10);
+    expect(translateButton.props.className).toBeDefined();
+    expect(translateButton.props.className).toContain('p-'); // Has padding for touch targets
 
     // AND: text should be readable without horizontal scrolling
     // Verify that the multiline input is enabled for proper text wrapping

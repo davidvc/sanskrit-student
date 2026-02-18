@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 
 interface OriginalTextProps {
   lines: string[];
@@ -6,27 +6,13 @@ interface OriginalTextProps {
 
 export default function OriginalText({ lines }: OriginalTextProps) {
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Original Text:</Text>
+    <View className="mb-6">
+      <Text className="text-lg font-semibold">Original Text:</Text>
       {lines.map((line: string, index: number) => (
-        <Text key={`original-${index}`} style={styles.text}>
+        <Text key={`original-${index}`} className="text-base mb-1">
           {line}
         </Text>
       ))}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  text: {
-    fontSize: 16,
-    marginBottom: 4,
-  },
-});

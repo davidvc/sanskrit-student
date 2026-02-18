@@ -1,4 +1,4 @@
-import { View, TextInput, Pressable, Text, StyleSheet } from 'react-native';
+import { View, TextInput, Pressable, Text } from 'react-native';
 
 interface SutraInputProps {
   value: string;
@@ -9,49 +9,23 @@ interface SutraInputProps {
 
 export default function SutraInput({ value, onChangeText, onTranslate, disabled }: SutraInputProps) {
   return (
-    <View style={styles.inputContainer}>
+    <View className="mb-4">
       <TextInput
-        style={styles.input}
+        className="border border-gray-300 rounded-lg p-3 text-base min-h-[60px] mb-3"
         placeholder="Enter Sanskrit text"
         value={value}
         onChangeText={onChangeText}
         multiline
       />
       <Pressable
-        style={styles.button}
+        className="bg-primary-500 p-3 rounded-lg items-center"
         onPress={onTranslate}
         disabled={disabled}
         accessibilityState={{ disabled }}
         testID="translate-button"
       >
-        <Text style={styles.buttonText}>Translate</Text>
+        <Text className="text-white text-base font-semibold">Translate</Text>
       </Pressable>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  inputContainer: {
-    marginBottom: 16,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    minHeight: 60,
-    marginBottom: 12,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
