@@ -10,3 +10,9 @@ dist/
 
 # Beads export state
 .beads/export-state/
+
+# Gas Town (added by gt)
+.runtime/
+.claude/
+.beads/
+.logs/
