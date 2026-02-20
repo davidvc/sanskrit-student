@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { createServer as createNodeServer } from 'node:http';
 import { createServer, createProductionConfig, createConfig, ServerDependencies } from './server';
 import { MockLlmClient } from './adapters/mock-llm-client';
