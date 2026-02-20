@@ -72,16 +72,18 @@ export class ClaudeLlmClient implements LlmClient {
     const prompt = this.buildPrompt(sutra);
 
     try {
-      const response = await this.client.messages.create({
-        model: this.model,
-        max_tokens: 2048,
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-      });
+      const response = await this.callWithRetry(() =>
+        this.client.messages.create({
+          model: this.model,
+          max_tokens: 2048,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        })
+      );
 
       return this.parseResponse(response);
     } catch (error) {
@@ -91,6 +93,56 @@ export class ClaudeLlmClient implements LlmClient {
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new ClaudeLlmError(`Failed to translate sutra: ${message}`);
     }
+  }
+
+  /**
+   * Calls the API with retry logic for transient errors.
+   * Implements exponential backoff for overloaded and rate limit errors.
+   */
+  private async callWithRetry<T>(
+    fn: () => Promise<T>,
+    maxRetries = 3,
+    baseDelay = 1000
+  ): Promise<T> {
+    let lastError: Error | undefined;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        // Check if it's a retryable error
+        const errorMessage = lastError.message.toLowerCase();
+        const isOverloaded = errorMessage.includes('overloaded');
+        const isRateLimit = errorMessage.includes('rate') || errorMessage.includes('429');
+
+        if (!isOverloaded && !isRateLimit) {
+          // Non-retryable error, throw immediately
+          throw error;
+        }
+
+        if (attempt === maxRetries) {
+          // Out of retries
+          break;
+        }
+
+        // Calculate delay with exponential backoff
+        const delay = baseDelay * Math.pow(2, attempt);
+        const jitter = Math.random() * 0.1 * delay; // Add 10% jitter
+        const totalDelay = delay + jitter;
+
+        console.warn(
+          `API ${isOverloaded ? 'overloaded' : 'rate limited'}, ` +
+          `retrying in ${Math.round(totalDelay)}ms (attempt ${attempt + 1}/${maxRetries})`
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, totalDelay));
+      }
+    }
+
+    // All retries exhausted
+    throw lastError;
   }
 
   /**
