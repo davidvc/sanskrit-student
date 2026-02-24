@@ -78,9 +78,9 @@ describe('Scenario: Alternative translation display', () => {
 
     // AND: each alternative should be clearly separated and readable
     // Verify they are rendered as separate Text components (clearly separated)
-    expect(alt1.props.style).toBeDefined();
-    expect(alt2.props.style).toBeDefined();
-    expect(alt3.props.style).toBeDefined();
+    expect(alt1.props.className).toBeDefined();
+    expect(alt2.props.className).toBeDefined();
+    expect(alt3.props.className).toBeDefined();
   });
 
   it('displays fewer than 3 alternatives when only some are available', async () => {

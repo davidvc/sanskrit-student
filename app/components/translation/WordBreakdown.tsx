@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 
 interface WordInfo {
   word: string;
@@ -11,13 +11,13 @@ interface WordBreakdownProps {
 
 export default function WordBreakdown({ words }: WordBreakdownProps) {
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Word Breakdown:</Text>
+    <View className="mb-6">
+      <Text className="text-lg font-semibold">Word Breakdown:</Text>
       {words.map((wordInfo: WordInfo, index: number) => (
-        <View key={`word-${index}`} style={styles.wordContainer}>
-          <Text style={styles.word}>{wordInfo.word}</Text>
+        <View key={`word-${index}`} className="mb-3 pb-2 border-b border-gray-200">
+          <Text className="text-base font-semibold mb-1">{wordInfo.word}</Text>
           {wordInfo.meanings.map((meaning: string, mIndex: number) => (
-            <Text key={`meaning-${mIndex}`} style={styles.meaning}>
+            <Text key={`meaning-${mIndex}`} className="text-sm text-gray-600 ml-3">
               {meaning}
             </Text>
           ))}
@@ -26,29 +26,3 @@ export default function WordBreakdown({ words }: WordBreakdownProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  wordContainer: {
-    marginBottom: 12,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  word: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  meaning: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 12,
-  },
-});

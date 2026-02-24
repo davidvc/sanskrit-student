@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 
 interface AlternativeTranslationsProps {
   translations: string[];
@@ -10,27 +10,13 @@ export default function AlternativeTranslations({ translations }: AlternativeTra
   }
 
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Alternative Translations:</Text>
+    <View className="mb-6">
+      <Text className="text-lg font-semibold">Alternative Translations:</Text>
       {translations.slice(0, 3).map((alt: string, index: number) => (
-        <Text key={`alt-${index}`} style={styles.text}>
+        <Text key={`alt-${index}`} className="text-base mb-1">
           {alt}
         </Text>
       ))}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  text: {
-    fontSize: 16,
-    marginBottom: 4,
-  },
-});

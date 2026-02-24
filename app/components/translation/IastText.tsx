@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import CopyButton from '../ui/CopyButton';
 
 interface IastTextProps {
@@ -8,9 +8,9 @@ interface IastTextProps {
 
 export default function IastText({ lines, onCopy }: IastTextProps) {
   return (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>IAST:</Text>
+    <View className="mb-6">
+      <View className="flex-row justify-between items-center mb-2">
+        <Text className="text-lg font-semibold">IAST:</Text>
         <CopyButton
           onPress={onCopy}
           testID="copy-iast-button"
@@ -18,30 +18,10 @@ export default function IastText({ lines, onCopy }: IastTextProps) {
         />
       </View>
       {lines.map((line: string, index: number) => (
-        <Text key={`iast-${index}`} style={styles.text}>
+        <Text key={`iast-${index}`} className="text-base mb-1">
           {line}
         </Text>
       ))}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  section: {
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  text: {
-    fontSize: 16,
-    marginBottom: 4,
-  },
-});

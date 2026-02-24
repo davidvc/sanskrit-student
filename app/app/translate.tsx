@@ -1,5 +1,5 @@
 import { useReducer } from 'react';
-import { Text, ScrollView, StyleSheet } from 'react-native';
+import { Text, ScrollView } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useTranslateSutraQuery } from '../lib/graphql/generated';
 import SutraInput from '../components/translation/SutraInput';
@@ -147,7 +147,7 @@ export default function Translate() {
   const shouldShowResults = (state.status === 'success' || state.status === 'copied') && data?.translateSutra;
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView className="flex-1 p-4 sm:p-6 md:p-8">
       <SutraInput
         value={state.inputText}
         onChangeText={(text) => dispatch({ type: 'INPUT_CHANGED', text })}
@@ -155,10 +155,10 @@ export default function Translate() {
         disabled={isLoading}
       />
 
-      {isLoading && <Text style={styles.loading}>Loading...</Text>}
-      {showValidationError && <Text style={styles.error}>{state.error}</Text>}
-      {showServerError && <Text style={styles.error}>Error: {state.error}</Text>}
-      {showCopyConfirmation && <Text style={styles.success}>Copied to clipboard</Text>}
+      {isLoading && <Text className="text-center p-4 text-base">Loading...</Text>}
+      {showValidationError && <Text className="text-center p-4 text-base text-red-600">{state.error}</Text>}
+      {showServerError && <Text className="text-center p-4 text-base text-red-600">Error: {state.error}</Text>}
+      {showCopyConfirmation && <Text className="text-center p-4 text-base text-green-600">Copied to clipboard</Text>}
 
       {shouldShowResults && data?.translateSutra && (
         <TranslationResult
@@ -169,27 +169,3 @@ export default function Translate() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  loading: {
-    textAlign: 'center',
-    padding: 16,
-    fontSize: 16,
-  },
-  error: {
-    textAlign: 'center',
-    padding: 16,
-    fontSize: 16,
-    color: '#ff0000',
-  },
-  success: {
-    textAlign: 'center',
-    padding: 16,
-    fontSize: 16,
-    color: '#00aa00',
-  },
-});
