@@ -1,6 +1,6 @@
 
 {
-  "apiKeyHelper": "npx @ebay/claude-code-token@latest get_token",
+  "apiKeyHelper": "npm_config_registry=https://artifactory.corp.ebay.com/artifactory/api/npm/npm npx @ebay/claude-code-token@latest get_token",
   "env": {
     "ANTHROPIC_MODEL": "hubgpt-chat-completions-claude-sonnet-4-5",
     "CLAUDE_CODE_SUBAGENT_MODEL": "hubgpt-chat-completions-claude-sonnet-4-5",
