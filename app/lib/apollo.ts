@@ -1,7 +1,18 @@
 import { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client';
 
+// Determine the GraphQL endpoint based on environment
+const getGraphQLUri = () => {
+  // In production (deployed to Vercel), use relative path on same domain
+  if (process.env.NODE_ENV === 'production') {
+    return '/graphql';
+  }
+
+  // In development, use local server
+  return 'http://localhost:4000/graphql';
+};
+
 const httpLink = new HttpLink({
-  uri: 'http://localhost:4000/graphql',
+  uri: getGraphQLUri(),
 });
 
 export const apolloClient = new ApolloClient({

@@ -16,3 +16,4 @@ dist/
 .claude/
 .beads/
 .logs/
+.vercel

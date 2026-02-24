@@ -8,6 +8,9 @@ import { ImageValidatorFactory } from './adapters/image-validator-factory';
 
 const DEFAULT_PORT = 4000;
 
+// Export for serverless function (Vercel)
+export { createServer, createProductionConfig, createConfig, ServerDependencies };
+
 async function main() {
   const useMock = process.argv.includes('--mock') || !process.env.ANTHROPIC_API_KEY;
 
@@ -35,7 +38,10 @@ async function main() {
   });
 }
 
-main().catch((error) => {
-  console.error('Failed to start server:', error);
-  process.exit(1);
-});
+// Only run main() when executed directly (not when imported)
+if (require.main === module) {
+  main().catch((error) => {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  });
+}
