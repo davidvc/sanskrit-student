@@ -1,0 +1,5 @@
+This is a placeholder. Create actual PNG files:
+- favicon.png (256x256)
+- icon.png (1024x1024)
+- splash.png (1024x1024)
+- adaptive-icon.png (1024x1024)

@@ -1,7 +1,6 @@
 import { Stack } from 'expo-router';
 import { ApolloProvider } from '@apollo/client';
 import { apolloClient } from '../lib/apollo';
-import '../global.css';
 
 export default function RootLayout() {
   return (

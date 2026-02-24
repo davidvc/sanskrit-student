@@ -8,21 +8,34 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "jsx": "react-native",
-    "lib": ["ES2020"],
-    "types": ["jest", "@testing-library/jest-native"],
+    "lib": [
+      "ES2020"
+    ],
+    "types": [
+      "jest",
+      "@testing-library/jest-native"
+    ],
     "paths": {
-      "@/*": ["./*"],
-      "@components/*": ["./components/*"],
-      "@lib/*": ["./lib/*"],
-      "@graphql/*": ["./graphql/*"],
-      "@hooks/*": ["./hooks/*"]
+      "@/*": [
+        "./*"
+      ],
+      "@components/*": [
+        "./components/*"
+      ],
+      "@lib/*": [
+        "./lib/*"
+      ],
+      "@graphql/*": [
+        "./graphql/*"
+      ],
+      "@hooks/*": [
+        "./hooks/*"
+      ]
     }
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "**/*.tsx"
   ],
   "exclude": [
     "node_modules"
