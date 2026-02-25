@@ -1,0 +1,656 @@
+# Journey Schema: Camera Study Workflow
+# Description: Student photographs Sanskrit text from physical book for translation
+# Last Updated: 2026-02-24
+
+journey:
+  name: "Camera Study Workflow"
+  epic: "ocr-translation"
+  type: "primary"
+  persona:
+    name: "Maria Santos"
+    role: "Spiritual practitioner"
+    context: "Studying Yoga Sutras at home with physical book"
+    constraints:
+      - "Cannot read Devanagari script"
+      - "Cannot type Devanagari"
+      - "Mobile-only (phone camera)"
+
+  trigger:
+    event: "Encounters Devanagari sutra in physical book"
+    emotional_state: "Blocked/Frustrated"
+    need: "Understand meaning of sacred text to continue spiritual study"
+
+  outcome:
+    success_state: "Translation copied to study notes, can continue reading"
+    emotional_state: "Empowered/Grateful"
+    time_to_completion: "30-60 seconds (camera to translated result)"
+
+  steps:
+    - id: "step_1_initiate"
+      name: "Initiate Scan"
+      emotional_state: "Hopeful"
+      duration: "5-10 seconds"
+
+      user_actions:
+        - "Opens app on phone"
+        - "Sees 'Take Photo' button"
+        - "Taps 'Take Photo'"
+
+      system_behavior:
+        - "Display home screen with two options: 'Translate Text' and 'Take Photo'"
+        - "Show one-time tip: 'Use bright, even lighting for best results'"
+        - "Request camera permission if not granted"
+
+      ui_elements:
+        - element: "primary_cta"
+          label: "Take Photo"
+          type: "button"
+          style: "primary"
+          icon: "📷"
+          helper_text: "Scan text from book"
+
+        - element: "lighting_tip"
+          text: "💡 Tip: Use bright, even lighting for best results"
+          display_rule: "first_time_only"
+
+      artifacts_produced:
+        - name: "user_session"
+          type: "session_context"
+          scope: "journey"
+
+      success_criteria:
+        - "Camera permission granted"
+        - "Camera view opens within 2 seconds"
+
+      error_paths:
+        - condition: "Camera permission denied"
+          next_step: "error_camera_permission"
+
+    - id: "step_2_position_camera"
+      name: "Position Camera"
+      emotional_state: "Trusting"
+      duration: "10-20 seconds"
+
+      user_actions:
+        - "Positions phone camera over sutra text in book"
+        - "Adjusts distance until 2-6 lines fill frame"
+        - "Waits for hands to steady"
+        - "Taps capture button"
+
+      system_behavior:
+        - "Display camera viewfinder with guidance overlay"
+        - "Show landscape-oriented frame (70% screen width)"
+        - "Display guidance text inside frame"
+        - "Enable tap-to-focus and brightness controls"
+
+      ui_elements:
+        - element: "guidance_frame"
+          shape: "landscape_rectangle"
+          width: "70% screen width"
+          overlay_text:
+            - "Position text within this frame"
+            - "Best results: photograph 2-6 lines"
+
+        - element: "capture_button"
+          type: "button"
+          style: "large_circular"
+          position: "bottom_center"
+          icon: "⚪"
+
+        - element: "back_button"
+          label: "← Back"
+          position: "top_left"
+
+        - element: "flash_toggle"
+          label: "Flash"
+          position: "top_right"
+
+      artifacts_produced:
+        - name: "camera_frame_guidance"
+          type: "ui_overlay"
+          data:
+            frame_text: "Position text within this frame"
+            recommendation: "Best results: photograph 2-6 lines"
+
+      success_criteria:
+        - "User can see book text clearly through viewfinder"
+        - "Frame guides user to optimal composition"
+
+      error_paths:
+        - condition: "User taps Back"
+          next_step: "step_1_initiate"
+
+    - id: "step_3_preview_photo"
+      name: "Preview Photo"
+      emotional_state: "Checking Quality"
+      duration: "5-15 seconds"
+
+      user_actions:
+        - "Reviews captured photo"
+        - "Pinches to zoom and check text clarity"
+        - "Decides: use photo or retake"
+        - "Taps 'Use This Photo' or 'Retake'"
+
+      system_behavior:
+        - "Display full-screen photo preview"
+        - "Enable pinch-to-zoom gesture"
+        - "Show quality prompt: 'Is the text clear?'"
+        - "Display two action buttons"
+
+      ui_elements:
+        - element: "photo_preview"
+          type: "image"
+          size: "full_screen"
+          gestures: ["pinch_to_zoom"]
+
+        - element: "quality_prompt"
+          text: "Is the text clear?"
+          style: "prominent_question"
+
+        - element: "retake_button"
+          label: "Retake"
+          type: "button"
+          style: "secondary"
+
+        - element: "confirm_button"
+          label: "Use This Photo"
+          type: "button"
+          style: "primary"
+
+      artifacts_produced:
+        - name: "original_image"
+          type: "image_buffer"
+          format: "JPEG/PNG"
+          source: "camera_capture"
+          validation:
+            - "format: image/jpeg, image/png"
+            - "size: ≤5MB"
+            - "dimensions: ≥800px width recommended"
+
+      success_criteria:
+        - "Photo preview displays within 1 second of capture"
+        - "User can zoom to verify text clarity"
+
+      error_paths:
+        - condition: "User taps Retake"
+          next_step: "step_2_position_camera"
+        - condition: "Image exceeds 5MB"
+          next_step: "error_file_too_large"
+
+    - id: "step_4_processing"
+      name: "OCR + Translation Processing"
+      emotional_state: "Patient"
+      duration: "3-8 seconds"
+
+      user_actions:
+        - "Waits while system processes"
+
+      system_behavior:
+        - "Upload original_image to server"
+        - "Store via InMemoryImageStorage.store() → returns image_handle"
+        - "Retrieve buffer via InMemoryImageStorage.retrieve(image_handle)"
+        - "Pass buffer to GoogleVisionOcrEngine.extractText()"
+        - "Receive extracted_devanagari + ocr_confidence"
+        - "Validate ocr_confidence ≥10%"
+        - "Pass extracted_devanagari to NormalizingTranslationService"
+        - "Convert Devanagari → IAST via ScriptNormalizer"
+        - "Translate IAST via LlmTranslationService (Claude)"
+        - "Generate word_breakdown, primary_translation, alternative_translations"
+        - "Call InMemoryImageStorage.cleanup(image_handle)"
+        - "Return complete result to UI"
+
+      ui_elements:
+        - element: "processing_spinner"
+          type: "animated_spinner"
+          position: "center"
+
+        - element: "status_message"
+          text: "Reading Devanagari text..."
+          style: "subtitle"
+
+        - element: "progress_bar"
+          type: "progress_indicator"
+          range: "0-100%"
+          animation: "indeterminate"
+
+      artifacts_produced:
+        - name: "image_handle"
+          type: "storage_reference"
+          source: "InMemoryImageStorage.store()"
+          lifecycle: "temporary (deleted in finally block)"
+
+        - name: "extracted_devanagari"
+          type: "string"
+          format: "Devanagari Unicode"
+          source: "GoogleVisionOcrEngine"
+          example: "योगश्चित्तवृत्तिनिरोधः।"
+
+        - name: "ocr_confidence"
+          type: "float"
+          range: "0.0-1.0"
+          source: "GoogleVisionOcrEngine"
+          example: 0.94
+
+        - name: "iast_text"
+          type: "string"
+          format: "IAST transliteration"
+          source: "ScriptNormalizer"
+          example: "yogaś-citta-vṛtti-nirodhaḥ"
+
+        - name: "word_breakdown"
+          type: "array"
+          schema:
+            word: "string (IAST)"
+            meanings: "array<string>"
+          source: "LlmTranslationService"
+          example:
+            - word: "yogaḥ"
+              meanings: ["yoga", "union", "spiritual path"]
+
+        - name: "primary_translation"
+          type: "string"
+          source: "LlmTranslationService"
+          example: "Yoga is the cessation of the fluctuations of consciousness."
+
+        - name: "alternative_translations"
+          type: "array<string>"
+          source: "LlmTranslationService"
+          example:
+            - "Yoga is the stilling of the movements of the mind."
+            - "Union is achieved through the restraint of mental activity."
+
+      success_criteria:
+        - "Processing completes within 8 seconds (p95)"
+        - "ocr_confidence ≥10%"
+        - "extracted_devanagari contains valid Unicode"
+        - "Cleanup called even if OCR/translation fails"
+
+      error_paths:
+        - condition: "ocr_confidence <10%"
+          next_step: "error_no_text_detected"
+        - condition: "Upload fails (network/server error)"
+          next_step: "error_upload_failed"
+        - condition: "Translation service fails"
+          next_step: "error_translation_failed"
+
+    - id: "step_5_verification"
+      name: "Trust Verification"
+      emotional_state: "Reassured"
+      duration: "10-30 seconds"
+
+      user_actions:
+        - "Reviews OCR confidence score"
+        - "Compares extracted_devanagari to original mental image of book"
+        - "Optionally taps 'Show Original Photo' to compare side-by-side"
+        - "Optionally copies extracted_devanagari or iast_text"
+        - "Scrolls down to see translation"
+
+      system_behavior:
+        - "Display OCR confidence with visual indicator (green/yellow/red)"
+        - "Show extracted_devanagari in copyable text box"
+        - "Show iast_text in copyable text box"
+        - "Provide toggle to show/hide original_image"
+        - "Show translation sections (collapsed by default)"
+
+      ui_elements:
+        - element: "confidence_score"
+          value: "${ocr_confidence}"
+          format: "percentage (e.g., '94%')"
+          visual_treatment:
+            - "≥90%: green bar + 'High' label"
+            - "70-89%: yellow bar + 'Medium' label"
+            - "<70%: orange bar + 'Low' label"
+
+        - element: "extracted_text_box"
+          label: "Extracted Text"
+          content: "${extracted_devanagari}"
+          actions: ["copy_button"]
+
+        - element: "iast_text_box"
+          label: "IAST"
+          content: "${iast_text}"
+          actions: ["copy_button"]
+
+        - element: "original_photo_toggle"
+          label: "▼ Show Original Photo"
+          type: "expandable_section"
+          collapsed_by_default: true
+          content: "${original_image} (thumbnail)"
+
+        - element: "translation_section_header"
+          label: "Translation ▼"
+          type: "expandable_section"
+          collapsed_by_default: false
+
+      artifacts_consumed:
+        - "extracted_devanagari"
+        - "ocr_confidence"
+        - "iast_text"
+        - "original_image (optional comparison)"
+
+      success_criteria:
+        - "Confidence score is immediately visible (above fold)"
+        - "User can copy extracted text with one tap"
+        - "Visual comparison to original is available on demand"
+
+      error_paths:
+        - condition: "ocr_confidence <70%"
+          next_step: "step_5_verification_low_confidence"
+
+    - id: "step_6_translation_learning"
+      name: "Translation & Learning"
+      emotional_state: "Empowered → Grateful"
+      duration: "30-120 seconds"
+
+      user_actions:
+        - "Reads primary_translation"
+        - "Expands word_breakdown for deeper understanding"
+        - "Reviews alternative_translations"
+        - "Taps 'Copy Translation' to paste into study notes"
+        - "Taps 'Translate Another Passage' to scan next sutra"
+
+      system_behavior:
+        - "Display primary_translation prominently"
+        - "Show word_breakdown as expandable list"
+        - "Show alternative_translations below"
+        - "Provide copy button for full translation"
+        - "Provide 'Translate Another Passage' button (restarts journey)"
+
+      ui_elements:
+        - element: "primary_translation_text"
+          content: "${primary_translation}"
+          style: "prominent_paragraph"
+
+        - element: "copy_translation_button"
+          label: "📎 Copy Translation"
+          type: "button"
+          action: "copy_to_clipboard(${primary_translation})"
+
+        - element: "word_breakdown_list"
+          type: "expandable_list"
+          items: "${word_breakdown}"
+          item_template:
+            word_label: "${word}"
+            meanings_list: "${meanings.join(', ')}"
+
+        - element: "alternative_translations_section"
+          label: "Alternative Translations:"
+          items: "${alternative_translations}"
+          item_style: "indented_paragraph"
+
+        - element: "next_passage_button"
+          label: "Translate Another Passage"
+          type: "button"
+          style: "secondary"
+          action: "restart_journey()"
+
+      artifacts_consumed:
+        - "primary_translation"
+        - "word_breakdown"
+        - "alternative_translations"
+
+      success_criteria:
+        - "User successfully copies translation to clipboard"
+        - "Word meanings aid understanding (user reads at least 2 words)"
+        - "User feels empowered to continue study"
+        - "'Translate Another Passage' restarts journey smoothly"
+
+      completion:
+        journey_end: true
+        next_action: "User returns to studying book with understanding"
+
+  error_steps:
+    - id: "step_5_verification_low_confidence"
+      name: "Verification with Low Confidence Warning"
+      emotional_state: "Cautious → Supported"
+      trigger: "ocr_confidence <70%"
+
+      system_behavior:
+        - "Display warning badge on confidence score"
+        - "Show warning message explaining low confidence"
+        - "Suggest retaking photo with better lighting"
+        - "Allow user to continue anyway (verify carefully)"
+
+      ui_elements:
+        - element: "confidence_warning"
+          icon: "⚠️"
+          message: "Low confidence detected. The image may be blurry or poorly lit. Please verify the extracted text carefully."
+
+        - element: "retake_suggestion_button"
+          label: "Retake with Better Lighting"
+          type: "button"
+          style: "primary"
+          action: "restart_journey_at(step_2_position_camera)"
+
+        - element: "continue_anyway_toggle"
+          label: "Or continue anyway ▼"
+          type: "expandable_section"
+          content: "Verification and translation sections (with extra warnings)"
+
+      user_actions:
+        - option_a: "Taps 'Retake with Better Lighting' → returns to step_2_position_camera"
+        - option_b: "Expands 'continue anyway' → proceeds to verify extracted text carefully"
+
+      success_criteria:
+        - "User understands risk of low confidence"
+        - "Retake path is clear and easy"
+        - "If continuing, warnings persist on extracted text"
+
+    - id: "error_camera_permission"
+      name: "Camera Permission Denied"
+      emotional_state: "Blocked → Guided"
+      trigger: "User denies camera permission"
+
+      system_behavior:
+        - "Display error message explaining need for camera"
+        - "Provide button to open system settings"
+        - "Provide fallback option: upload from gallery"
+
+      ui_elements:
+        - element: "error_icon"
+          icon: "📷🚫"
+
+        - element: "error_message"
+          text: "Camera access is needed to photograph Sanskrit text. Please enable camera permission in your browser settings."
+
+        - element: "open_settings_button"
+          label: "Open Settings"
+          type: "button"
+          action: "deep_link_to_browser_settings()"
+
+        - element: "fallback_button"
+          label: "Or Upload Image Instead"
+          type: "button"
+          action: "switch_to_gallery_upload()"
+
+        - element: "back_button"
+          label: "← Back to Home"
+          action: "return_to_step_1()"
+
+      success_criteria:
+        - "User can enable permission and retry"
+        - "User has alternative path (gallery upload)"
+
+    - id: "error_file_too_large"
+      name: "File Size Exceeds Limit"
+      emotional_state: "Frustrated → Supported"
+      trigger: "original_image size >5MB"
+
+      system_behavior:
+        - "Detect file size before upload"
+        - "Display specific error with actual vs limit size"
+        - "Provide actionable suggestions"
+
+      ui_elements:
+        - element: "error_icon"
+          icon: "⚠️"
+
+        - element: "error_message"
+          text: "Image too large (${actual_size}). Maximum file size: 5 MB"
+
+        - element: "suggestions_list"
+          items:
+            - "Use lower camera resolution"
+            - "Photograph smaller text area (2-6 lines recommended)"
+
+        - element: "try_again_button"
+          label: "Try Again"
+          action: "return_to_step_2()"
+
+        - element: "adjust_settings_button"
+          label: "Adjust Camera Settings"
+          action: "deep_link_to_camera_settings()"
+
+      success_criteria:
+        - "User understands specific problem (too large)"
+        - "User knows how to fix it (lower resolution)"
+
+    - id: "error_no_text_detected"
+      name: "No Devanagari Text Detected"
+      emotional_state: "Confused → Guided"
+      trigger: "ocr_confidence <10%"
+
+      system_behavior:
+        - "Reject OCR result (unusable)"
+        - "Explain likely causes"
+        - "Suggest retaking"
+
+      ui_elements:
+        - element: "error_message"
+          text: "No Devanagari text detected in image."
+
+        - element: "possible_causes"
+          items:
+            - "Image is too blurry or out of focus"
+            - "Text is too small or far away"
+            - "Lighting is too dark"
+            - "Image contains no Devanagari script"
+
+        - element: "retake_button"
+          label: "Retake Photo"
+          action: "return_to_step_2()"
+
+      success_criteria:
+        - "User understands why detection failed"
+        - "User can retry with better technique"
+
+    - id: "error_upload_failed"
+      name: "Upload Failed (Network/Server Error)"
+      emotional_state: "Frustrated → Supported"
+      trigger: "Network error or server failure during upload"
+
+      system_behavior:
+        - "Detect network/server error"
+        - "Display generic but clear error"
+        - "Provide retry mechanism"
+
+      ui_elements:
+        - element: "error_message"
+          text: "Upload failed. Please check your connection and try again."
+
+        - element: "retry_button"
+          label: "Retry Upload"
+          action: "retry_step_4_processing()"
+
+        - element: "back_button"
+          label: "← Start Over"
+          action: "return_to_step_1()"
+
+      success_criteria:
+        - "User can retry without losing photo"
+        - "User understands it's a connection issue, not their fault"
+
+  shared_artifacts:
+    - name: "original_image"
+      description: "User's captured photo of Sanskrit text in book"
+      type: "image_buffer"
+      format: "JPEG/PNG"
+      lifecycle: "temporary (deleted after translation)"
+      single_source: "step_3_preview_photo"
+      used_in:
+        - "step_4_processing (OCR input)"
+        - "step_5_verification (optional comparison)"
+
+    - name: "extracted_devanagari"
+      description: "Raw OCR output in Devanagari script"
+      type: "string (Unicode)"
+      single_source: "step_4_processing → GoogleVisionOcrEngine"
+      used_in:
+        - "step_5_verification (display for verification)"
+        - "step_4_processing (input to ScriptNormalizer)"
+
+    - name: "ocr_confidence"
+      description: "OCR confidence score (0.0-1.0)"
+      type: "float"
+      single_source: "step_4_processing → GoogleVisionOcrEngine"
+      used_in:
+        - "step_5_verification (trust indicator)"
+        - "step_5_verification_low_confidence (warning trigger)"
+      validation:
+        - "≥0.9: High confidence (green)"
+        - "0.7-0.89: Medium confidence (yellow)"
+        - "0.1-0.69: Low confidence (orange + warning)"
+        - "<0.1: Reject (error_no_text_detected)"
+
+    - name: "iast_text"
+      description: "Transliterated text in IAST format"
+      type: "string (IAST)"
+      single_source: "step_4_processing → ScriptNormalizer"
+      used_in:
+        - "step_5_verification (display, copy)"
+        - "step_4_processing (input to LlmTranslationService)"
+
+    - name: "word_breakdown"
+      description: "Array of words with their meanings"
+      type: "array<{word: string, meanings: string[]}>"
+      single_source: "step_4_processing → LlmTranslationService"
+      used_in:
+        - "step_6_translation_learning (detailed study)"
+
+    - name: "primary_translation"
+      description: "Main English translation of sutra"
+      type: "string"
+      single_source: "step_4_processing → LlmTranslationService"
+      used_in:
+        - "step_6_translation_learning (display, copy)"
+
+    - name: "alternative_translations"
+      description: "Alternative English phrasings"
+      type: "array<string>"
+      single_source: "step_4_processing → LlmTranslationService"
+      used_in:
+        - "step_6_translation_learning (comparative study)"
+
+  quality_gates:
+    emotional_coherence:
+      - "No jarring emotional transitions between steps"
+      - "Anxiety addressed proactively (confidence score, warnings)"
+      - "User feels supported in error paths, not blamed"
+      - "Reverence for sacred texts maintained (accurate extraction critical)"
+
+    horizontal_integration:
+      - "All shared artifacts have single source of truth"
+      - "No orphaned data (everything tracked from capture → cleanup)"
+      - "Cleanup guaranteed even on error (finally block)"
+      - "Integration checkpoints validated at each step"
+
+    mobile_ux_compliance:
+      - "Progressive disclosure (don't show translation until verification)"
+      - "Clear affordances (buttons labeled with outcomes)"
+      - "Touch-friendly targets (min 44px tap area)"
+      - "Material honesty (camera is camera, not scanner)"
+
+  metrics:
+    success_metrics:
+      - "Time to translation: <60 seconds (p95)"
+      - "OCR confidence: ≥90% for clear images (p75)"
+      - "Retake rate: <20% (indicates good camera guidance)"
+      - "Copy-to-clipboard usage: ≥60% (indicates utility)"
+
+    emotional_metrics:
+      - "User reports feeling 'empowered' vs 'frustrated' (qualitative)"
+      - "Return usage: ≥50% of users scan multiple sutras in session"
+
+    quality_metrics:
+      - "Low confidence warnings: shown for <30% of scans"
+      - "Error recovery success: ≥80% resolve and complete journey"

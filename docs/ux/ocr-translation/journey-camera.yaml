@@ -1,0 +1,346 @@
+# Journey Schema: Camera OCR Translation
+# Format: LeanUX Journey Schema v1.0
+
+journey:
+  name: "Camera OCR Translation"
+  persona: "Spiritual practitioner studying Sanskrit (cannot read/type Devanagari)"
+  job_story: "When I encounter Devanagari text in my spiritual study, I want to instantly access its meaning with confidence in accuracy"
+  platform: mobile
+  entry_point: app_home_screen
+  
+phases:
+  - id: encounter
+    name: "Encounter & Trigger"
+    context: "User studying with physical Sanskrit book, reaches Devanagari passage"
+    user_state:
+      location: "At home or study space with physical book"
+      emotional: "blocked"
+      cognitive_load: "low"
+      urgency: "medium"
+    
+    trigger:
+      type: "need"
+      description: "Cannot read Devanagari text, needs translation to continue study"
+      quote: "I need to know what this means, but I can't read this script"
+    
+    artifacts_visible:
+      - physical_book_with_devanagari
+    
+  - id: camera_launch
+    name: "Camera Launch"
+    steps:
+      - action: "open_app"
+        ui: "Home screen with two options: Translate Text | Take Photo"
+        decision: "Tap 'Take Photo' button"
+        
+      - action: "show_first_time_tip"
+        condition: "first_use"
+        ui: "💡 Tip: Use bright, even lighting for best results"
+        duration_seconds: 3
+        
+    user_state:
+      emotional: "hopeful"
+      confidence: "medium"
+      
+    artifacts_created:
+      - name: camera_session
+        type: ephemeral
+        
+  - id: camera_capture
+    name: "Camera View & Capture"
+    steps:
+      - action: "show_camera_view"
+        ui: "Camera viewfinder with landscape frame overlay (70% width)"
+        guidance: "Best results: photograph 2-6 lines"
+        
+      - action: "position_camera"
+        user_behavior: "User positions phone camera over book page, framing 2-6 line sutra"
+        duration_seconds: 5-10
+        
+      - action: "tap_shutter"
+        trigger: manual
+        input: user_tap
+        
+    user_state:
+      emotional: "focused"
+      cognitive_load: "medium"
+      engagement: "high"
+      
+    artifacts_created:
+      - name: original_photo
+        type: image_buffer
+        format: "JPEG"
+        max_size: "5MB"
+        content: "Photo of Devanagari text in physical book"
+        
+  - id: preview_confirm
+    name: "Preview & Confirm"
+    steps:
+      - action: "show_preview"
+        ui: "Photo preview with zoom capability"
+        prompt: "Is the text clear and in focus?"
+        
+      - action: "user_decision"
+        options:
+          - label: "✓ Use This Photo"
+            next: processing
+            
+          - label: "↻ Retake"
+            next: camera_capture
+            
+    user_state:
+      emotional: "analytical"
+      confidence_check: true
+      
+    shared_artifacts:
+      - ${originalImage}  # User can visually inspect before committing
+      
+  - id: processing
+    name: "OCR & Translation Processing"
+    steps:
+      - action: "upload_image"
+        progress_message: "Uploading image..."
+        duration_seconds: 1-2
+        
+      - action: "ocr_extraction"
+        progress_message: "Reading Devanagari text..."
+        duration_seconds: 1-2
+        service: google_cloud_vision
+        
+      - action: "translation"
+        progress_message: "Translating..."
+        duration_seconds: 1-2
+        service: claude_llm
+        
+    user_state:
+      emotional: "trusting"
+      patience_threshold_seconds: 10  # Abandon if longer
+      
+    artifacts_created:
+      - name: extracted_devanagari
+        type: text
+        source: ocr_engine
+        confidence_score: 0.0-1.0
+        
+      - name: iast_text
+        type: text
+        source: script_normalizer
+        
+      - name: word_breakdown
+        type: structured_data
+        source: llm_translation
+        
+      - name: alternative_translations
+        type: list
+        source: llm_translation
+        
+    error_paths:
+      - condition: "file_too_large"
+        message: "Image too large (X MB). Maximum is 5 MB."
+        guidance: "Try cropping to just the text area"
+        action: retry
+        
+      - condition: "unsupported_format"
+        message: "Format not supported. Please use PNG, JPG, or WEBP."
+        action: retry
+        
+      - condition: "upload_timeout"
+        message: "Upload timed out. Please check your connection and try again."
+        action: retry
+        
+  - id: trust_verification
+    name: "Trust Verification"
+    steps:
+      - action: "display_confidence_badge"
+        variants:
+          - condition: "confidence >= 0.90"
+            ui: "✓ High Confidence (X%)"
+            color: green
+            
+          - condition: "confidence >= 0.70 AND confidence < 0.90"
+            ui: "⚠️ Medium Confidence (X%)"
+            color: yellow
+            
+          - condition: "confidence < 0.70"
+            ui: "⚠️ Low Confidence (X%)"
+            color: orange
+            warning: "Image quality may affect accuracy. For better results: Retake with better lighting, less blur, or crop closer to text."
+            
+      - action: "display_side_by_side_comparison"
+        layout: two_column
+        left: ${originalImage}  # Thumbnail, tap to expand
+        right: ${extractedDevanagari}  # Text, tap to copy
+        
+    user_state:
+      emotional: "relieved"  # If high confidence
+      confidence_building: true
+      
+    shared_artifacts:
+      - ${originalImage}
+      - ${extractedDevanagari}
+      - ${ocrConfidence}
+      
+    conditional_paths:
+      - condition: "confidence < 0.70"
+        user_state:
+          emotional: "informed"  # Not frustrated - they have guidance
+        options:
+          - label: "↻ Upload Different Image"
+            next: camera_capture
+          - label: "↓ See Translation Anyway"
+            next: translation_display
+            
+  - id: translation_display
+    name: "Translation & Learning"
+    steps:
+      - action: "display_iast"
+        ui: "IAST Transliteration with [Copy] button"
+        artifact: ${iastText}
+        collapsible: false
+        
+      - action: "display_word_breakdown"
+        ui: "Expandable list of words with meanings"
+        artifact: ${wordBreakdown}
+        default_state: collapsed
+        interaction: "tap word to expand meanings"
+        
+      - action: "display_translation"
+        ui: "Primary translation with [Copy] button"
+        artifact: ${translation}
+        
+      - action: "display_alternatives"
+        ui: "Alternative Translations (collapsible section)"
+        artifact: ${alternativeTranslations}
+        default_state: collapsed
+        
+    user_state:
+      emotional: "empowered"
+      satisfaction: "high"
+      learning_mode: true
+      
+    user_actions:
+      - copy_iast_to_notes
+      - copy_translation_to_notes
+      - expand_word_meanings
+      - compare_alternative_translations
+      
+    shared_artifacts:
+      - ${iastText}
+      - ${wordBreakdown}
+      - ${translation}
+      - ${alternativeTranslations}
+      
+  - id: completion
+    name: "Return to Study"
+    outcome: "User has understanding of Devanagari passage, can continue studying"
+    user_state:
+      emotional: "grateful"
+      goal_achieved: true
+      
+    next_action:
+      - user_returns_to_physical_book
+      - pastes_translation_into_study_notes
+      - continues_reading_next_passage
+      
+artifacts_registry:
+  - name: ${originalImage}
+    type: image_buffer
+    source: user_camera
+    lifecycle: ephemeral  # Deleted after translation
+    used_in:
+      - preview_confirm
+      - trust_verification
+      
+  - name: ${extractedDevanagari}
+    type: text
+    source: ocr_engine
+    lifecycle: session  # Available throughout session
+    used_in:
+      - trust_verification
+      - translation_display
+      
+  - name: ${ocrConfidence}
+    type: float
+    range: 0.0-1.0
+    source: ocr_engine
+    lifecycle: session
+    used_in:
+      - trust_verification
+      
+  - name: ${iastText}
+    type: text
+    source: script_normalizer
+    lifecycle: session
+    copyable: true
+    used_in:
+      - translation_display
+      
+  - name: ${wordBreakdown}
+    type: structured_data
+    schema:
+      - word: string
+        meanings: array<string>
+    source: llm_translation
+    lifecycle: session
+    used_in:
+      - translation_display
+      
+  - name: ${translation}
+    type: text
+    source: llm_translation
+    lifecycle: session
+    copyable: true
+    used_in:
+      - translation_display
+      
+  - name: ${alternativeTranslations}
+    type: array<string>
+    source: llm_translation
+    lifecycle: session
+    used_in:
+      - translation_display
+      
+emotional_arc:
+  - phase: encounter
+    emotion: "blocked"
+    valence: negative
+    
+  - phase: camera_launch
+    emotion: "hopeful"
+    valence: neutral_positive
+    
+  - phase: camera_capture
+    emotion: "focused"
+    valence: neutral
+    engagement: high
+    
+  - phase: preview_confirm
+    emotion: "analytical"
+    valence: neutral
+    confidence_check: true
+    
+  - phase: processing
+    emotion: "trusting"
+    valence: neutral_positive
+    patience: required
+    
+  - phase: trust_verification
+    emotion: "relieved"
+    valence: positive
+    confidence: building
+    
+  - phase: translation_display
+    emotion: "empowered"
+    valence: very_positive
+    satisfaction: high
+    
+  - phase: completion
+    emotion: "grateful"
+    valence: very_positive
+    goal_achieved: true
+    
+success_criteria:
+  - photo_to_translation_time_seconds: "< 5"
+  - confidence_score: ">= 0.90"
+  - user_copies_result: true
+  - user_returns_for_next_sutra: true
