@@ -20,14 +20,13 @@ export default function Camera() {
   const [progressState, setProgressState] = useState<ProgressState>('idle');
   const [showLightingTip, setShowLightingTip] = useState(false);
   const cameraRef = useRef<any>(null);
+  const lightingTipTimerRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
   const [translateSutraFromImage] = useTranslateSutraFromImageMutation();
 
   // Check first-use flag and show lighting tip if needed
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-
     const checkFirstUse = async () => {
       try {
         const tipShown = await AsyncStorage.getItem('camera_lighting_tip_shown');
@@ -36,8 +35,9 @@ export default function Camera() {
           AsyncStorage.setItem('camera_lighting_tip_shown', 'true');
 
           // Auto-dismiss after 3 seconds
-          timer = setTimeout(() => {
+          lightingTipTimerRef.current = setTimeout(() => {
             setShowLightingTip(false);
+            lightingTipTimerRef.current = null;
           }, 3000);
         }
       } catch (error) {
@@ -48,8 +48,9 @@ export default function Camera() {
     checkFirstUse();
 
     return () => {
-      if (timer) {
-        clearTimeout(timer);
+      if (lightingTipTimerRef.current) {
+        clearTimeout(lightingTipTimerRef.current);
+        lightingTipTimerRef.current = null;
       }
     };
   }, []);
@@ -227,7 +228,13 @@ export default function Camera() {
           </Text>
           <TouchableOpacity
             style={styles.dismissTipButton}
-            onPress={() => setShowLightingTip(false)}
+            onPress={() => {
+              if (lightingTipTimerRef.current) {
+                clearTimeout(lightingTipTimerRef.current);
+                lightingTipTimerRef.current = null;
+              }
+              setShowLightingTip(false);
+            }}
             testID="dismiss-tip-button"
           >
             <Text style={styles.dismissTipButtonText}>×</Text>

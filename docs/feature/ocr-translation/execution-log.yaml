@@ -286,5 +286,30 @@ events:
   s: EXECUTED
   sid: 02-04
   t: '2026-02-26T02:05:06Z'
+- d: PASS
+  p: COMMIT
+  s: EXECUTED
+  sid: 02-04
+  t: '2026-02-26T02:05:27Z'
+- d: Removing skip from scenario 7
+  p: PREPARE
+  s: EXECUTED
+  sid: 02-09
+  t: '2026-02-26T02:06:56Z'
+- d: Test passes but timer not cancelled - React warning present
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-09
+  t: '2026-02-26T02:08:01Z'
+- d: 'NOT_APPLICABLE: Acceptance test sufficient for manual dismiss validation'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 02-09
+  t: '2026-02-26T02:08:08Z'
+- d: Timer properly cancelled on manual dismiss - all tests green
+  p: GREEN
+  s: EXECUTED
+  sid: 02-09
+  t: '2026-02-26T02:09:02Z'
 project_id: ocr-translation
 schema_version: '3.0'

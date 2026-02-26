@@ -204,7 +204,7 @@ describe('Scenario: Show lighting tip on first use', () => {
     expect(tipContainer).toHaveStyle({ position: 'absolute' });
   });
 
-  it.skip('can manually dismiss tip before 3 seconds', async () => {
+  it('can manually dismiss tip before 3 seconds', async () => {
     // GIVEN: I am using the app for the first time
     mockGetItem.mockResolvedValue(null);
 
@@ -220,17 +220,19 @@ describe('Scenario: Show lighting tip on first use', () => {
       expect(tipMessage).toBeTruthy();
     });
 
-    // AND: I tap the dismiss button (if provided)
-    const dismissButton = screen.queryByTestId('dismiss-tip-button');
-    if (dismissButton) {
-      fireEvent.press(dismissButton);
+    // AND: I tap the dismiss button
+    const dismissButton = screen.getByTestId('dismiss-tip-button');
+    fireEvent.press(dismissButton);
 
-      // THEN: the tip should disappear immediately
-      await waitFor(() => {
-        expect(screen.queryByText(/💡 tip.*bright.*even lighting/i)).toBeNull();
-      });
-    }
+    // THEN: the tip should disappear immediately
+    await waitFor(() => {
+      expect(screen.queryByText(/💡 tip.*bright.*even lighting/i)).toBeNull();
+    });
 
-    // Tip should auto-dismiss even without manual dismiss button
+    // AND: advancing time should not cause tip to reappear (timer was cancelled)
+    jest.advanceTimersByTime(3000);
+
+    // Tip should still be absent after timer would have fired
+    expect(screen.queryByText(/💡 tip.*bright.*even lighting/i)).toBeNull();
   });
 });
