@@ -164,9 +164,13 @@ describe('Scenario: Complete camera to translation flow', () => {
     );
   });
 
-  it.skip('handles retake during the flow', async () => {
+  it('handles retake during the flow', async () => {
     // GIVEN: I have captured a photo
-    render(<Camera />);
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <Camera />
+      </MockedProvider>
+    );
 
     const shutterButton = screen.getByTestId('shutter-button');
     fireEvent.press(shutterButton);

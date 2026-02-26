@@ -175,10 +175,11 @@ events:
   t: '2026-02-26T01:37:30Z'
 - d: PASS
   p: RED_UNIT
+  reason: UI component fully covered by acceptance test - no additional unit tests
+    needed
   s: SKIPPED
   sid: 02-03
   t: '2026-02-26T01:37:35Z'
-  reason: 'UI component fully covered by acceptance test - no additional unit tests needed'
 - d: PASS
   p: GREEN
   s: EXECUTED
@@ -189,5 +190,50 @@ events:
   s: EXECUTED
   sid: 02-03
   t: '2026-02-26T01:38:12Z'
+- d: Enabled scenarios 4 and 5 in retake-flow.test.tsx
+  p: PREPARE
+  s: EXECUTED
+  sid: 02-05
+  t: '2026-02-26T01:46:21Z'
+- d: Tests failed as expected - scenarios 4 and 5 needed MockedProvider and proper
+    photo capture setup
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-05
+  t: '2026-02-26T01:46:24Z'
+- d: 'NOT_APPLICABLE: No unit tests needed - all behavior tested through driving port
+    (Camera component acceptance tests)'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 02-05
+  t: '2026-02-26T01:46:28Z'
+- d: Fixed test scenarios 4 and 5 - added MockedProvider and initial photo capture.
+    All 5 retake-flow tests passing. Existing implementation already supports multi-retake
+    and URI cleanup.
+  p: GREEN
+  s: EXECUTED
+  sid: 02-05
+  t: '2026-02-26T01:46:32Z'
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 02-07
+  t: '2026-02-26T01:51:16Z'
+- d: PASS
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-07
+  t: '2026-02-26T01:52:36Z'
+- d: 'NOT_APPLICABLE: No unit test needed - retake already implemented and tested
+    via acceptance test'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 02-07
+  t: '2026-02-26T01:53:07Z'
+- d: PASS
+  p: GREEN
+  s: EXECUTED
+  sid: 02-07
+  t: '2026-02-26T01:53:09Z'
 project_id: ocr-translation
 schema_version: '3.0'
