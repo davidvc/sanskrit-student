@@ -19,6 +19,15 @@ export default function Camera() {
     }
   };
 
+  const handleRetake = () => {
+    setPhotoUri(null);
+  };
+
+  const handleUsePhoto = () => {
+    // TODO: Will be implemented in next step to trigger OCR
+    console.log('Use photo:', photoUri);
+  };
+
   if (photoUri) {
     return (
       <View style={styles.container} testID="photo-preview">
@@ -27,6 +36,25 @@ export default function Camera() {
           style={styles.previewImage}
           testID="preview-image"
         />
+        <View style={styles.previewControls}>
+          <Text style={styles.qualityPrompt}>Is the text clear and in focus?</Text>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.button, styles.retakeButton]}
+              onPress={handleRetake}
+              testID="retake-button"
+            >
+              <Text style={styles.buttonText}>Retake</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.usePhotoButton]}
+              onPress={handleUsePhoto}
+              testID="use-photo-button"
+            >
+              <Text style={styles.buttonText}>Use This Photo</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     );
   }
@@ -100,5 +128,47 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
+  },
+  previewControls: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 20,
+    paddingBottom: 40,
+  },
+  qualityPrompt: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+    fontWeight: '600',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    gap: 16,
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  retakeButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  usePhotoButton: {
+    backgroundColor: '#007AFF',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
