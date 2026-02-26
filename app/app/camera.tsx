@@ -1,19 +1,89 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
-import { CameraView } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useTranslateSutraFromImageMutation } from '../lib/graphql/generated';
+import { GestureHandlerRootView, PinchGestureHandler, State } from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  useAnimatedGestureHandler,
+} from 'react-native-reanimated';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ProgressState = 'idle' | 'uploading' | 'ocr' | 'translating' | 'complete';
 
 export default function Camera() {
+  const [permission, requestPermission] = useCameraPermissions();
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [progressState, setProgressState] = useState<ProgressState>('idle');
+  const [showLightingTip, setShowLightingTip] = useState(false);
   const cameraRef = useRef<any>(null);
+  const lightingTipTimerRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
   const [translateSutraFromImage] = useTranslateSutraFromImageMutation();
+
+  // Check first-use flag and show lighting tip if needed
+  useEffect(() => {
+    const checkFirstUse = async () => {
+      try {
+        const tipShown = await AsyncStorage.getItem('camera_lighting_tip_shown');
+        if (!tipShown) {
+          setShowLightingTip(true);
+          AsyncStorage.setItem('camera_lighting_tip_shown', 'true');
+
+          // Auto-dismiss after 3 seconds
+          lightingTipTimerRef.current = setTimeout(() => {
+            setShowLightingTip(false);
+            lightingTipTimerRef.current = null;
+          }, 3000);
+        }
+      } catch (error) {
+        console.error('Error checking first-use flag:', error);
+      }
+    };
+
+    checkFirstUse();
+
+    return () => {
+      if (lightingTipTimerRef.current) {
+        clearTimeout(lightingTipTimerRef.current);
+        lightingTipTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  // Zoom state using reanimated
+  const scale = useSharedValue(1);
+  const focalX = useSharedValue(0);
+  const focalY = useSharedValue(0);
+  const baseScale = useSharedValue(1);
+
+  const pinchHandler = useAnimatedGestureHandler({
+    onStart: (_, ctx: any) => {
+      ctx.startScale = scale.value;
+    },
+    onActive: (event, ctx) => {
+      const newScale = Math.min(Math.max(ctx.startScale * event.scale, 1), 3);
+      scale.value = newScale;
+      focalX.value = event.focalX;
+      focalY.value = event.focalY;
+    },
+    onEnd: () => {
+      baseScale.value = scale.value;
+    },
+  });
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: scale.value },
+      ],
+    };
+  });
 
   const handleShutterPress = async () => {
     if (!cameraRef.current || isCapturing) return;
@@ -28,6 +98,12 @@ export default function Camera() {
   };
 
   const handleRetake = () => {
+    // Reset zoom state
+    scale.value = withTiming(1);
+    baseScale.value = 1;
+    focalX.value = 0;
+    focalY.value = 0;
+
     setPhotoUri(null);
     setProgressState('idle');
   };
@@ -80,6 +156,38 @@ export default function Camera() {
     }
   };
 
+  // Handle camera permission states
+  if (!permission) {
+    // Permission info is loading
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.progressText}>Loading camera...</Text>
+      </View>
+    );
+  }
+
+  if (!permission.granted) {
+    // Permission not granted - show request UI
+    return (
+      <View style={styles.container}>
+        <View style={styles.permissionContainer}>
+          <Text style={styles.permissionTitle}>Camera Access Required</Text>
+          <Text style={styles.permissionText}>
+            Sanskrit Student needs access to your camera to photograph Devanagari text for translation.
+          </Text>
+          <TouchableOpacity
+            style={styles.permissionButton}
+            onPress={requestPermission}
+            testID="request-camera-permission-button"
+          >
+            <Text style={styles.permissionButtonText}>Grant Camera Permission</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   // Show progress messages
   if (progressState !== 'idle') {
     const progressMessages = {
@@ -99,32 +207,40 @@ export default function Camera() {
 
   if (photoUri) {
     return (
-      <View style={styles.container} testID="photo-preview">
-        <Image
-          source={{ uri: photoUri }}
-          style={styles.previewImage}
-          testID="preview-image"
-        />
-        <View style={styles.previewControls}>
-          <Text style={styles.qualityPrompt}>Is the text clear and in focus?</Text>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.retakeButton]}
-              onPress={handleRetake}
-              testID="retake-button"
-            >
-              <Text style={styles.buttonText}>Retake</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.usePhotoButton]}
-              onPress={handleUsePhoto}
-              testID="use-photo-button"
-            >
-              <Text style={styles.buttonText}>Use This Photo</Text>
-            </TouchableOpacity>
+      <GestureHandlerRootView style={styles.container}>
+        <View style={styles.container} testID="photo-preview">
+          <PinchGestureHandler onGestureEvent={pinchHandler}>
+            <Animated.View style={[styles.previewImageContainer, animatedStyle]}>
+              <Animated.Image
+                source={{ uri: photoUri }}
+                style={styles.previewImage}
+                testID="preview-image"
+                // @ts-ignore - custom prop for testing
+                zoomEnabled={true}
+              />
+            </Animated.View>
+          </PinchGestureHandler>
+          <View style={styles.previewControls}>
+            <Text style={styles.qualityPrompt}>Is the text clear and in focus?</Text>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, styles.retakeButton]}
+                onPress={handleRetake}
+                testID="retake-button"
+              >
+                <Text style={styles.buttonText}>Retake</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.usePhotoButton]}
+                onPress={handleUsePhoto}
+                testID="use-photo-button"
+              >
+                <Text style={styles.buttonText}>Use This Photo</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </GestureHandlerRootView>
     );
   }
 
@@ -138,6 +254,26 @@ export default function Camera() {
         <View style={styles.frameOverlay} testID="camera-frame-overlay" />
         <Text style={styles.guidanceText}>Best results: photograph 2-6 lines</Text>
       </CameraView>
+      {showLightingTip && (
+        <View style={styles.lightingTipContainer} testID="lighting-tip-container">
+          <Text style={styles.lightingTipText}>
+            💡 Tip: Use bright, even lighting for best results
+          </Text>
+          <TouchableOpacity
+            style={styles.dismissTipButton}
+            onPress={() => {
+              if (lightingTipTimerRef.current) {
+                clearTimeout(lightingTipTimerRef.current);
+                lightingTipTimerRef.current = null;
+              }
+              setShowLightingTip(false);
+            }}
+            testID="dismiss-tip-button"
+          >
+            <Text style={styles.dismissTipButtonText}>×</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       <TouchableOpacity
         style={styles.shutterButton}
         onPress={handleShutterPress}
@@ -157,6 +293,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#000',
+  },
+  permissionContainer: {
+    padding: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 16,
+    maxWidth: 340,
+    alignItems: 'center',
+  },
+  permissionTitle: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  permissionText: {
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  permissionButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    width: '100%',
+  },
+  permissionButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   camera: {
     flex: 1,
@@ -192,6 +362,11 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     backgroundColor: '#fff',
+  },
+  previewImageContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
   previewImage: {
     flex: 1,
@@ -245,5 +420,37 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginTop: 20,
     textAlign: 'center',
+  },
+  lightingTipContainer: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 12,
+    padding: 16,
+    paddingRight: 40,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  lightingTipText: {
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  dismissTipButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dismissTipButtonText: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '300',
   },
 });

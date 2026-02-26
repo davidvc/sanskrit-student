@@ -127,5 +127,189 @@ events:
   s: EXECUTED
   sid: 01-05
   t: '2026-02-26T01:16:44Z'
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 02-01
+  t: '2026-02-26T01:32:46Z'
+- d: PASS - All 3 scenarios passing (functionality already implemented in step 01-03)
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-01
+  t: '2026-02-26T01:34:26Z'
+- d: 'NOT_APPLICABLE: UI acceptance tests cover all behaviors through driving port
+    (React component). No internal classes to unit test.'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 02-01
+  t: '2026-02-26T01:34:31Z'
+- d: PASS - Implementation already exists from step 01-03, all tests passing
+  p: GREEN
+  s: EXECUTED
+  sid: 02-01
+  t: '2026-02-26T01:34:34Z'
+- d: PASS
+  p: COMMIT
+  s: EXECUTED
+  sid: 02-01
+  t: '2026-02-26T01:35:12Z'
+- d: PASS
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-01
+  t: '2026-02-26T01:35:35Z'
+- d: PASS
+  p: GREEN
+  s: EXECUTED
+  sid: 02-01
+  t: '2026-02-26T01:35:38Z'
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 02-03
+  t: '2026-02-26T01:37:03Z'
+- d: PASS
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-03
+  t: '2026-02-26T01:37:30Z'
+- d: PASS
+  p: RED_UNIT
+  reason: UI component fully covered by acceptance test - no additional unit tests
+    needed
+  s: SKIPPED
+  sid: 02-03
+  t: '2026-02-26T01:37:35Z'
+- d: PASS
+  p: GREEN
+  s: EXECUTED
+  sid: 02-03
+  t: '2026-02-26T01:37:46Z'
+- d: PASS
+  p: COMMIT
+  s: EXECUTED
+  sid: 02-03
+  t: '2026-02-26T01:38:12Z'
+- d: Enabled scenarios 4 and 5 in retake-flow.test.tsx
+  p: PREPARE
+  s: EXECUTED
+  sid: 02-05
+  t: '2026-02-26T01:46:21Z'
+- d: Tests failed as expected - scenarios 4 and 5 needed MockedProvider and proper
+    photo capture setup
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-05
+  t: '2026-02-26T01:46:24Z'
+- d: 'NOT_APPLICABLE: No unit tests needed - all behavior tested through driving port
+    (Camera component acceptance tests)'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 02-05
+  t: '2026-02-26T01:46:28Z'
+- d: Fixed test scenarios 4 and 5 - added MockedProvider and initial photo capture.
+    All 5 retake-flow tests passing. Existing implementation already supports multi-retake
+    and URI cleanup.
+  p: GREEN
+  s: EXECUTED
+  sid: 02-05
+  t: '2026-02-26T01:46:32Z'
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 02-07
+  t: '2026-02-26T01:51:16Z'
+- d: PASS
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-07
+  t: '2026-02-26T01:52:36Z'
+- d: 'NOT_APPLICABLE: No unit test needed - retake already implemented and tested
+    via acceptance test'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 02-07
+  t: '2026-02-26T01:53:07Z'
+- d: PASS
+  p: GREEN
+  s: EXECUTED
+  sid: 02-07
+  t: '2026-02-26T01:53:09Z'
+- d: PASS
+  p: COMMIT
+  s: EXECUTED
+  sid: 02-07
+  t: '2026-02-26T01:53:35Z'
+- d: Scenarios 3, 4, 5 identified in end-to-end-camera-flow.test.tsx
+  p: PREPARE
+  s: EXECUTED
+  sid: 02-08
+  t: '2026-02-26T01:58:12Z'
+- d: Scenarios 3 PASS, 4 timeout, 5 expects array but gets JSON string
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-08
+  t: '2026-02-26T01:58:15Z'
+- d: 'NOT_APPLICABLE: No unit tests needed - acceptance tests cover behavior through
+    driving port'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 02-08
+  t: '2026-02-26T01:58:19Z'
+- d: All 3 scenarios pass - test assertions fixed to match router.push param serialization
+  p: GREEN
+  s: EXECUTED
+  sid: 02-08
+  t: '2026-02-26T01:58:23Z'
+- d: Commit f00c5d3 - test assertions fixed for router param serialization
+  p: COMMIT
+  s: EXECUTED
+  sid: 02-08
+  t: '2026-02-26T01:58:28Z'
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 02-04
+  t: '2026-02-26T02:00:02Z'
+- d: PASS
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-04
+  t: '2026-02-26T02:00:21Z'
+- d: 'NOT_APPLICABLE: No unit tests needed - acceptance tests sufficient for UI integration'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 02-04
+  t: '2026-02-26T02:00:29Z'
+- d: PASS
+  p: GREEN
+  s: EXECUTED
+  sid: 02-04
+  t: '2026-02-26T02:05:06Z'
+- d: PASS
+  p: COMMIT
+  s: EXECUTED
+  sid: 02-04
+  t: '2026-02-26T02:05:27Z'
+- d: Removing skip from scenario 7
+  p: PREPARE
+  s: EXECUTED
+  sid: 02-09
+  t: '2026-02-26T02:06:56Z'
+- d: Test passes but timer not cancelled - React warning present
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-09
+  t: '2026-02-26T02:08:01Z'
+- d: 'NOT_APPLICABLE: Acceptance test sufficient for manual dismiss validation'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 02-09
+  t: '2026-02-26T02:08:08Z'
+- d: Timer properly cancelled on manual dismiss - all tests green
+  p: GREEN
+  s: EXECUTED
+  sid: 02-09
+  t: '2026-02-26T02:09:02Z'
 project_id: ocr-translation
 schema_version: '3.0'
