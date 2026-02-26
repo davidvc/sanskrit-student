@@ -142,9 +142,13 @@ describe('Scenario: Retake photo if quality is poor', () => {
     // This test documents that retake is a non-destructive operation
   });
 
-  it.skip('allows multiple retakes without degradation', async () => {
+  it('allows multiple retakes without degradation', async () => {
     // GIVEN: I have taken multiple photos and retaken them
-    render(<Camera />);
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
 
     // Simulate multiple capture and retake cycles
     for (let i = 0; i < 3; i++) {
@@ -172,9 +176,21 @@ describe('Scenario: Retake photo if quality is poor', () => {
     expect(shutterButton).not.toHaveAccessibilityState({ disabled: true });
   });
 
-  it.skip('cleans up previous photo URI when retaking', async () => {
+  it('cleans up previous photo URI when retaking', async () => {
     // GIVEN: I am viewing the photo preview
-    render(<Camera />);
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
+
+    // First, capture a photo to enter preview state
+    const shutterButton = screen.getByTestId('shutter-button');
+    fireEvent.press(shutterButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('preview-image')).toBeTruthy();
+    });
 
     const previewImage = screen.getByTestId('preview-image');
     const previousUri = previewImage.props.source.uri;
@@ -190,13 +206,21 @@ describe('Scenario: Retake photo if quality is poor', () => {
     });
 
     // When a new photo is captured, it should have a different URI
-    const shutterButton = screen.getByTestId('shutter-button');
-    fireEvent.press(shutterButton);
+    // Mock a different URI for the second photo
+    mockTakePictureAsync.mockResolvedValueOnce({
+      uri: 'file:///mock-photo-2.jpg',
+      width: 1920,
+      height: 1080,
+    });
+
+    const shutterButtonAfterRetake = screen.getByTestId('shutter-button');
+    fireEvent.press(shutterButtonAfterRetake);
 
     await waitFor(() => {
       const newPreviewImage = screen.getByTestId('preview-image');
       const newUri = newPreviewImage.props.source.uri;
       expect(newUri).not.toBe(previousUri);
+      expect(newUri).toBe('file:///mock-photo-2.jpg');
     });
   });
 });
