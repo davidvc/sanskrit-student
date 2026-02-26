@@ -95,5 +95,32 @@ events:
   s: EXECUTED
   sid: 01-04
   t: '2026-02-26T01:08:31Z'
+- d: PASS
+  p: COMMIT
+  s: EXECUTED
+  sid: 01-04
+  t: '2026-02-26T01:08:56Z'
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 01-05
+  t: '2026-02-26T01:11:21Z'
+- d: 'PASS: Test fails because navigation not implemented (expected behavior)'
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 01-05
+  t: '2026-02-26T01:13:59Z'
+- d: 'NOT_APPLICABLE: UI navigation tested at acceptance level via router.push() mock
+    verification'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 01-05
+  t: '2026-02-26T01:14:05Z'
+- d: 'PASS: Navigation to /translate implemented, acceptance test passes, all existing
+    tests still pass'
+  p: GREEN
+  s: EXECUTED
+  sid: 01-05
+  t: '2026-02-26T01:15:44Z'
 project_id: ocr-translation
 schema_version: '3.0'

@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { CameraView } from 'expo-camera';
+import { useRouter } from 'expo-router';
 import { useTranslateSutraFromImageMutation } from '../lib/graphql/generated';
 
 type ProgressState = 'idle' | 'uploading' | 'ocr' | 'translating' | 'complete';
@@ -9,8 +10,8 @@ export default function Camera() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [progressState, setProgressState] = useState<ProgressState>('idle');
-  const [translationResult, setTranslationResult] = useState<any>(null);
   const cameraRef = useRef<any>(null);
+  const router = useRouter();
 
   const [translateSutraFromImage] = useTranslateSutraFromImageMutation();
 
@@ -29,7 +30,6 @@ export default function Camera() {
   const handleRetake = () => {
     setPhotoUri(null);
     setProgressState('idle');
-    setTranslationResult(null);
   };
 
   const handleUsePhoto = async () => {
@@ -57,32 +57,28 @@ export default function Camera() {
         variables: { image: file },
       });
 
-      setTranslationResult(result.data?.translateSutraFromImage);
-      setProgressState('complete');
+      const data = result.data?.translateSutraFromImage;
+      if (data) {
+        // Navigate to translation screen with OCR results
+        router.push({
+          pathname: '/translate',
+          params: {
+            fromCamera: true,
+            ocrConfidence: data.ocrConfidence,
+            extractedText: data.extractedText,
+            originalText: JSON.stringify(data.originalText),
+            iastText: JSON.stringify(data.iastText),
+            words: JSON.stringify(data.words),
+            alternativeTranslations: JSON.stringify(data.alternativeTranslations),
+            ocrWarnings: JSON.stringify(data.ocrWarnings || []),
+          },
+        });
+      }
     } catch (error) {
       console.error('Translation failed:', error);
       setProgressState('idle');
     }
   };
-
-  // Show translation result
-  if (progressState === 'complete' && translationResult) {
-    return (
-      <View style={styles.container} testID="translation-result">
-        <View style={styles.resultContainer}>
-          <Text style={styles.resultTitle}>Translation Result</Text>
-          <Text style={styles.resultText}>{translationResult.iastText.join(' ')}</Text>
-          <TouchableOpacity
-            style={[styles.button, styles.usePhotoButton]}
-            onPress={handleRetake}
-            testID="new-photo-button"
-          >
-            <Text style={styles.buttonText}>Take Another Photo</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
 
   // Show progress messages
   if (progressState !== 'idle') {
@@ -249,24 +245,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginTop: 20,
     textAlign: 'center',
-  },
-  resultContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#000',
-  },
-  resultTitle: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  resultText: {
-    color: '#fff',
-    fontSize: 18,
-    textAlign: 'center',
-    marginBottom: 40,
   },
 });
