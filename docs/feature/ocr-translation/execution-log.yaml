@@ -1,0 +1,29 @@
+events:
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 01-01
+  t: '2026-02-26T00:40:15Z'
+- d: PASS
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 01-01
+  t: '2026-02-26T00:42:27Z'
+- d: 'NOT_APPLICABLE: UI acceptance tests cover all behaviors through driving port
+    (React component). No internal classes to unit test.'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 01-01
+  t: '2026-02-26T00:42:36Z'
+- d: PASS
+  p: GREEN
+  s: EXECUTED
+  sid: 01-01
+  t: '2026-02-26T00:43:13Z'
+- d: PASS
+  p: COMMIT
+  s: EXECUTED
+  sid: 01-01
+  t: '2026-02-26T00:43:41Z'
+project_id: ocr-translation
+schema_version: '3.0'
