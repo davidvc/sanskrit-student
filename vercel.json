@@ -1,15 +1,10 @@
 {
   "buildCommand": "npm run build",
   "framework": null,
-  "functions": {
-    "api/graphql.js": {
-      "runtime": "nodejs20.x"
-    }
-  },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/graphql",
-      "dest": "/api/graphql"
+      "source": "/graphql",
+      "destination": "/api/graphql"
     }
   ],
   "env": {
