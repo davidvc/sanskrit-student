@@ -4,20 +4,41 @@ import Index from '../../../app/index';
 import Camera from '../../../app/camera';
 
 // Mock expo-camera
-jest.mock('expo-camera', () => ({
-  Camera: {
+jest.mock('expo-camera', () => {
+  const React = require('react');
+
+  return {
+    Camera: {
+      useCameraPermissions: jest.fn(() => [
+        { status: 'granted', granted: true },
+        jest.fn(),
+      ]),
+      Constants: {
+        Type: {
+          back: 0,
+          front: 1,
+        },
+      },
+    },
+    CameraView: React.forwardRef(({ children, ...props }: any, ref: any) => {
+      const { View } = require('react-native');
+
+      React.useImperativeHandle(ref, () => ({
+        takePictureAsync: jest.fn().mockResolvedValue({
+          uri: 'file:///mock-photo.jpg',
+          width: 1920,
+          height: 1080,
+        }),
+      }));
+
+      return <View testID="camera-view" {...props}>{children}</View>;
+    }),
     useCameraPermissions: jest.fn(() => [
       { status: 'granted', granted: true },
       jest.fn(),
     ]),
-    Constants: {
-      Type: {
-        back: 0,
-        front: 1,
-      },
-    },
-  },
-}));
+  };
+});
 
 // Mock expo-router
 jest.mock('expo-router', () => ({
