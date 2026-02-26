@@ -1,5 +1,6 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { render, screen, fireEvent } from '@testing-library/react-native';
+import { MockedProvider } from '@apollo/client/testing';
 import Camera from '../../../app/camera';
 
 // Mock expo-camera
@@ -45,7 +46,11 @@ describe('Scenario: Preview photo and verify quality', () => {
 
   it('displays preview with quality verification prompt', async () => {
     // GIVEN: I have captured a photo
-    render(<Camera />);
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
 
     // WHEN: I take a photo
     const shutterButton = screen.getByTestId('shutter-button');
@@ -66,7 +71,11 @@ describe('Scenario: Preview photo and verify quality', () => {
 
   it('shows "Use This Photo" and "Retake" buttons in preview', async () => {
     // GIVEN: I have captured a photo
-    render(<Camera />);
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
 
     // WHEN: I take a photo
     const shutterButton = screen.getByTestId('shutter-button');
@@ -90,7 +99,11 @@ describe('Scenario: Preview photo and verify quality', () => {
   it.skip('enables pinch-to-zoom on preview for quality inspection', () => {
     // GIVEN: I have captured a photo
     // WHEN: the preview displays
-    render(<Camera />);
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
 
     const previewImage = screen.getByTestId('preview-image');
     expect(previewImage).toBeTruthy();
@@ -114,7 +127,11 @@ describe('Scenario: Preview photo and verify quality', () => {
   it.skip('allows user to verify Devanagari text is sharp when zoomed', () => {
     // GIVEN: I have captured a photo with Devanagari text
     // AND: the preview is displayed
-    render(<Camera />);
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
 
     const previewImage = screen.getByTestId('preview-image');
 
@@ -136,7 +153,11 @@ describe('Scenario: Preview photo and verify quality', () => {
 
   it.skip('resets zoom when returning to camera view', () => {
     // GIVEN: I have zoomed into the preview
-    render(<Camera />);
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
 
     const previewImage = screen.getByTestId('preview-image');
 

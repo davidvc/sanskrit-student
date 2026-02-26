@@ -1,5 +1,6 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { MockedProvider } from '@apollo/client/testing';
 import Index from '../../../app/index';
 import Camera from '../../../app/camera';
 
@@ -89,7 +90,11 @@ describe('Scenario: Launch camera from home screen', () => {
   it('displays camera with landscape frame overlay and guidance text', async () => {
     // GIVEN: I have tapped the "Take Photo" button
     // WHEN: the camera opens
-    render(<Camera />);
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
 
     // THEN: I should see a landscape frame overlay (70% screen width)
     await waitFor(() => {

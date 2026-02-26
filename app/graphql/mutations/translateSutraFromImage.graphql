@@ -1,0 +1,14 @@
+mutation TranslateSutraFromImage($image: Upload!) {
+  translateSutraFromImage(image: $image) {
+    originalText
+    iastText
+    words {
+      word
+      meanings
+    }
+    alternativeTranslations
+    ocrConfidence
+    extractedText
+    ocrWarnings
+  }
+}

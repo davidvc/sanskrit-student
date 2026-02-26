@@ -1,5 +1,6 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { MockedProvider } from '@apollo/client/testing';
 import Camera from '../../../app/camera';
 
 // Mock expo-camera
@@ -52,7 +53,11 @@ describe('Scenario: Capture photo with manual shutter', () => {
   it('captures photo when shutter button is tapped', async () => {
     // GIVEN: the camera is open
     // AND: I have positioned my phone over a 4-line Devanagari sutra
-    render(<Camera />);
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
 
     const cameraView = screen.getByTestId('camera-view');
     expect(cameraView).toBeTruthy();
@@ -69,7 +74,11 @@ describe('Scenario: Capture photo with manual shutter', () => {
 
   it('shows preview immediately after photo is captured', async () => {
     // GIVEN: the camera is open
-    render(<Camera />);
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
 
     // WHEN: I tap the shutter button
     const shutterButton = screen.getByTestId('shutter-button');
@@ -88,7 +97,11 @@ describe('Scenario: Capture photo with manual shutter', () => {
 
   it.skip('disables shutter button during capture to prevent double-tap', async () => {
     // GIVEN: the camera is open
-    render(<Camera />);
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
 
     const shutterButton = screen.getByTestId('shutter-button');
 

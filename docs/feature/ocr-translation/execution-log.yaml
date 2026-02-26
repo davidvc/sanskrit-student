@@ -75,5 +75,30 @@ events:
   s: EXECUTED
   sid: 01-03
   t: '2026-02-26T00:58:42Z'
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 01-04
+  t: '2026-02-26T01:09:49Z'
+- d: PASS
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 01-04
+  t: '2026-02-26T01:09:52Z'
+- d: 'NOT_APPLICABLE: UI acceptance tests only, no unit tests per project guidelines'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 01-04
+  t: '2026-02-26T01:09:56Z'
+- d: PASS
+  p: GREEN
+  s: EXECUTED
+  sid: 01-04
+  t: '2026-02-26T01:09:59Z'
+- d: PASS
+  p: COMMIT
+  s: EXECUTED
+  sid: 01-04
+  t: '2026-02-26T01:10:02Z'
 project_id: ocr-translation
 schema_version: '3.0'

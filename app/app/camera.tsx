@@ -1,11 +1,18 @@
 import { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { CameraView } from 'expo-camera';
+import { useTranslateSutraFromImageMutation } from '../lib/graphql/generated';
+
+type ProgressState = 'idle' | 'uploading' | 'ocr' | 'translating' | 'complete';
 
 export default function Camera() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [progressState, setProgressState] = useState<ProgressState>('idle');
+  const [translationResult, setTranslationResult] = useState<any>(null);
   const cameraRef = useRef<any>(null);
+
+  const [translateSutraFromImage] = useTranslateSutraFromImageMutation();
 
   const handleShutterPress = async () => {
     if (!cameraRef.current || isCapturing) return;
@@ -21,12 +28,78 @@ export default function Camera() {
 
   const handleRetake = () => {
     setPhotoUri(null);
+    setProgressState('idle');
+    setTranslationResult(null);
   };
 
-  const handleUsePhoto = () => {
-    // TODO: Will be implemented in next step to trigger OCR
-    console.log('Use photo:', photoUri);
+  const handleUsePhoto = async () => {
+    if (!photoUri) return;
+
+    try {
+      // Start uploading
+      setProgressState('uploading');
+
+      // Simulate upload completion and transition to OCR
+      await new Promise(resolve => setTimeout(resolve, 100));
+      setProgressState('ocr');
+
+      // Simulate OCR completion and transition to translation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      setProgressState('translating');
+
+      // Create a mock File object from the photo URI
+      const response = await fetch(photoUri);
+      const blob = await response.blob();
+      const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+
+      // Execute the mutation
+      const result = await translateSutraFromImage({
+        variables: { image: file },
+      });
+
+      setTranslationResult(result.data?.translateSutraFromImage);
+      setProgressState('complete');
+    } catch (error) {
+      console.error('Translation failed:', error);
+      setProgressState('idle');
+    }
   };
+
+  // Show translation result
+  if (progressState === 'complete' && translationResult) {
+    return (
+      <View style={styles.container} testID="translation-result">
+        <View style={styles.resultContainer}>
+          <Text style={styles.resultTitle}>Translation Result</Text>
+          <Text style={styles.resultText}>{translationResult.iastText.join(' ')}</Text>
+          <TouchableOpacity
+            style={[styles.button, styles.usePhotoButton]}
+            onPress={handleRetake}
+            testID="new-photo-button"
+          >
+            <Text style={styles.buttonText}>Take Another Photo</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // Show progress messages
+  if (progressState !== 'idle') {
+    const progressMessages = {
+      uploading: 'Uploading image...',
+      ocr: 'Reading Devanagari text...',
+      translating: 'Translating...',
+      complete: '',
+    };
+
+    return (
+      <View style={styles.container} testID="progress-view">
+        <ActivityIndicator size="large" color="#007AFF" testID="upload-progress-indicator" />
+        <Text style={styles.progressText}>{progressMessages[progressState]}</Text>
+      </View>
+    );
+  }
 
   if (photoUri) {
     return (
@@ -170,5 +243,30 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  progressText: {
+    color: '#fff',
+    fontSize: 18,
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  resultContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#000',
+  },
+  resultTitle: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  resultText: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 40,
   },
 });
