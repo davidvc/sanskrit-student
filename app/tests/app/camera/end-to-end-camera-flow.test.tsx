@@ -200,7 +200,7 @@ describe('Scenario: Complete camera to translation flow', () => {
     });
   });
 
-  it.skip('displays high confidence badge in results', async () => {
+  it('displays high confidence badge in results', async () => {
     // GIVEN: I have submitted a clear photo
     const mocks = [
       {
@@ -260,7 +260,7 @@ describe('Scenario: Complete camera to translation flow', () => {
     // This test verifies the confidence score is passed correctly
   });
 
-  it.skip('handles low confidence warning gracefully', async () => {
+  it('handles low confidence warning gracefully', async () => {
     // GIVEN: I have submitted a blurry photo
     const mocks = [
       {
@@ -308,7 +308,7 @@ describe('Scenario: Complete camera to translation flow', () => {
           expect.objectContaining({
             params: expect.objectContaining({
               ocrConfidence: 0.65,
-              ocrWarnings: ['Low image quality detected'],
+              ocrWarnings: JSON.stringify(['Low image quality detected']),
             }),
           })
         );
@@ -320,7 +320,7 @@ describe('Scenario: Complete camera to translation flow', () => {
     // AND: provide option to retake photo
   });
 
-  it.skip('preserves line structure in multi-line sutras', async () => {
+  it('preserves line structure in multi-line sutras', async () => {
     // GIVEN: I photograph a 6-line sutra
     const mocks = [
       {
@@ -394,20 +394,16 @@ describe('Scenario: Complete camera to translation flow', () => {
       { timeout: 5000 }
     );
 
-    // AND: line structure should be preserved in originalText array
-    expect(mockPush).toHaveBeenCalledWith(
-      expect.objectContaining({
-        params: expect.objectContaining({
-          originalText: expect.arrayContaining([
-            'सत्यमेव',
-            'जयते',
-            'नानृतम्',
-            'सत्येन',
-            'पन्था',
-            'विततो',
-          ]),
-        }),
-      })
-    );
+    // AND: line structure should be preserved in originalText array (as JSON string in params)
+    const lastCall = mockPush.mock.calls[mockPush.mock.calls.length - 1][0];
+    const originalText = JSON.parse(lastCall.params.originalText);
+    expect(originalText).toEqual([
+      'सत्यमेव',
+      'जयते',
+      'नानृतम्',
+      'सत्येन',
+      'पन्था',
+      'विततो',
+    ]);
   });
 });

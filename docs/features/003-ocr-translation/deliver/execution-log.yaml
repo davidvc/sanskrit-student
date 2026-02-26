@@ -165,5 +165,46 @@ events:
   s: EXECUTED
   sid: 02-05
   t: '2026-02-26T01:45:28Z'
+- d: 'Committed step 02-05: Multiple retakes with URI cleanup. All tests passing.'
+  p: COMMIT
+  s: EXECUTED
+  sid: 02-05
+  t: '2026-02-26T01:45:45Z'
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 02-02
+  t: '2026-02-26T01:47:29Z'
+- d: PASS
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-02
+  t: '2026-02-26T01:48:28Z'
+- d: 'NOT_APPLICABLE: No unit tests per user instructions'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 02-02
+  t: '2026-02-26T01:48:52Z'
+- d: Scenarios 3, 4, 5 identified in end-to-end-camera-flow.test.tsx
+  p: PREPARE
+  s: EXECUTED
+  sid: 02-08
+  t: '2026-02-26T01:54:45Z'
+- d: Scenarios 3 PASS, 4 timeout, 5 expects array but gets JSON string
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-08
+  t: '2026-02-26T01:55:49Z'
+- d: 'NOT_APPLICABLE: No unit tests needed - acceptance tests cover behavior through
+    driving port'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 02-08
+  t: '2026-02-26T01:56:53Z'
+- d: All 3 scenarios pass - test assertions fixed to match router.push param serialization
+  p: GREEN
+  s: EXECUTED
+  sid: 02-08
+  t: '2026-02-26T01:56:57Z'
 project_id: ocr-translation
 schema_version: '3.0'
