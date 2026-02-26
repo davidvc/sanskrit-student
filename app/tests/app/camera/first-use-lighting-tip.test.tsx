@@ -4,14 +4,23 @@ import { MockedProvider } from '@apollo/client/testing';
 import Camera from '../../../app/camera';
 
 // Mock AsyncStorage for first-use flag persistence
-const mockAsyncStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-};
+jest.mock('@react-native-async-storage/async-storage', () => {
+  const { jest } = require('@jest/globals');
+  return {
+    __esModule: true,
+    default: {
+      getItem: jest.fn(),
+      setItem: jest.fn(),
+      removeItem: jest.fn(),
+      clear: jest.fn(),
+    },
+  };
+});
 
-jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
+// Get reference to the mocked functions
+const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+const mockGetItem = AsyncStorage.getItem;
+const mockSetItem = AsyncStorage.setItem;
 
 // Mock expo-camera
 jest.mock('expo-camera', () => ({
@@ -48,10 +57,10 @@ describe('Scenario: Show lighting tip on first use', () => {
     jest.useRealTimers();
   });
 
-  it.skip('displays lighting tip on first camera launch', async () => {
+  it('displays lighting tip on first camera launch', async () => {
     // GIVEN: I am using the app for the first time
     // AND: I have never seen the lighting tip before
-    mockAsyncStorage.getItem.mockResolvedValue(null); // First-use flag not set
+    mockGetItem.mockResolvedValue(null); // First-use flag not set
 
     // WHEN: I tap "Take Photo" to launch the camera
     render(
@@ -71,9 +80,9 @@ describe('Scenario: Show lighting tip on first use', () => {
     expect(tipMessage).toHaveTextContent(/use bright, even lighting for best results/i);
   });
 
-  it.skip('automatically dismisses lighting tip after 3 seconds', async () => {
+  it('automatically dismisses lighting tip after 3 seconds', async () => {
     // GIVEN: I am using the app for the first time
-    mockAsyncStorage.getItem.mockResolvedValue(null);
+    mockGetItem.mockResolvedValue(null);
 
     render(
       <MockedProvider mocks={[]}>
@@ -96,9 +105,9 @@ describe('Scenario: Show lighting tip on first use', () => {
     });
   });
 
-  it.skip('sets first-use flag after displaying tip', async () => {
+  it('sets first-use flag after displaying tip', async () => {
     // GIVEN: I am using the app for the first time
-    mockAsyncStorage.getItem.mockResolvedValue(null);
+    mockGetItem.mockResolvedValue(null);
 
     render(
       <MockedProvider mocks={[]}>
@@ -114,17 +123,17 @@ describe('Scenario: Show lighting tip on first use', () => {
 
     // THEN: the first-use flag should be set in storage
     await waitFor(() => {
-      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+      expect(mockSetItem).toHaveBeenCalledWith(
         'camera_lighting_tip_shown',
         'true'
       );
     });
   });
 
-  it.skip('does not show lighting tip on subsequent uses', async () => {
+  it('does not show lighting tip on subsequent uses', async () => {
     // GIVEN: I use the app a second time
     // AND: the first-use flag is set
-    mockAsyncStorage.getItem.mockResolvedValue('true');
+    mockGetItem.mockResolvedValue('true');
 
     // WHEN: I tap "Take Photo"
     render(
@@ -142,9 +151,9 @@ describe('Scenario: Show lighting tip on first use', () => {
     expect(screen.queryByText(/💡 tip.*bright.*even lighting/i)).toBeNull();
   });
 
-  it.skip('tip does not interfere with camera functionality', async () => {
+  it('tip does not interfere with camera functionality', async () => {
     // GIVEN: I am using the app for the first time
-    mockAsyncStorage.getItem.mockResolvedValue(null);
+    mockGetItem.mockResolvedValue(null);
 
     render(
       <MockedProvider mocks={[]}>
@@ -167,9 +176,9 @@ describe('Scenario: Show lighting tip on first use', () => {
     expect(shutterButton).not.toHaveAccessibilityState({ disabled: true });
   });
 
-  it.skip('tip displays as overlay, not blocking camera view', async () => {
+  it('tip displays as overlay, not blocking camera view', async () => {
     // GIVEN: I am using the app for the first time
-    mockAsyncStorage.getItem.mockResolvedValue(null);
+    mockGetItem.mockResolvedValue(null);
 
     render(
       <MockedProvider mocks={[]}>
@@ -197,7 +206,7 @@ describe('Scenario: Show lighting tip on first use', () => {
 
   it.skip('can manually dismiss tip before 3 seconds', async () => {
     // GIVEN: I am using the app for the first time
-    mockAsyncStorage.getItem.mockResolvedValue(null);
+    mockGetItem.mockResolvedValue(null);
 
     render(
       <MockedProvider mocks={[]}>
