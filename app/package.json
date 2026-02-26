@@ -17,6 +17,7 @@
     "@apollo/client": "^3.8.8",
     "@expo/metro-runtime": "~3.1.1",
     "expo": "~50.0.0",
+    "expo-camera": "^55.0.9",
     "expo-clipboard": "^8.0.8",
     "expo-router": "~3.4.0",
     "expo-status-bar": "~1.11.1",

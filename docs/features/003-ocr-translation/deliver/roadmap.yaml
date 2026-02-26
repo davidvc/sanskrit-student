@@ -1,0 +1,206 @@
+roadmap:
+  project_id: ocr-translation
+  created_at: '2026-02-26T00:12:09Z'
+  total_steps: 14
+  phases: 2
+  strategy: walking_skeleton
+  description: 'Phase 1 delivers complete camera-to-translation flow. Phase 2 adds robustness and UX polish.'
+phases:
+- id: '01'
+  name: 'Walking Skeleton - Camera to Translation Flow'
+  description: 'Implement minimal viable path: camera launch → capture → preview → GraphQL submission → navigation to results. User can photograph Sanskrit text and see translation.'
+  steps:
+  - id: 01-01
+    name: 'Camera component with navigation and UI'
+    description: 'Launch camera from home screen with frame overlay and guidance text'
+    criteria:
+      - 'Take Photo button visible on home screen'
+      - 'Camera opens within 1 second when tapped'
+      - 'Frame overlay renders at 70% screen width'
+      - 'Guidance text displays: "Best results: photograph 2-6 lines"'
+    time_estimate_minutes: 60
+    dependencies: []
+    tests_to_enable:
+      - 'camera-launch.test.tsx: scenario 1'
+      - 'camera-launch.test.tsx: scenario 2'
+      - 'camera-launch.test.tsx: scenario 3'
+  - id: 01-02
+    name: 'Photo capture with preview transition'
+    description: 'Shutter button captures photo and transitions to preview screen'
+    criteria:
+      - 'Shutter button captures photo when tapped'
+      - 'Preview displays immediately with correct photo URI'
+      - 'Camera view hidden when in preview mode'
+    time_estimate_minutes: 70
+    dependencies: ['01-01']
+    tests_to_enable:
+      - 'photo-capture.test.tsx: scenario 1'
+      - 'photo-capture.test.tsx: scenario 2'
+  - id: 01-03
+    name: 'Preview screen with action buttons'
+    description: 'Display preview with quality prompt and Use This Photo button'
+    criteria:
+      - 'Preview image displays captured photo'
+      - 'Quality prompt text: "Is the text clear and in focus?"'
+      - 'Use This Photo button visible and functional'
+    time_estimate_minutes: 50
+    dependencies: ['01-02']
+    tests_to_enable:
+      - 'photo-preview-zoom.test.tsx: scenario 1'
+      - 'photo-preview-zoom.test.tsx: scenario 2'
+  - id: 01-04
+    name: 'GraphQL mutation with progress messages'
+    description: 'Submit photo via translateSutraFromImage mutation with upload, OCR, and translation progress'
+    criteria:
+      - 'Use This Photo triggers GraphQL mutation'
+      - 'Progress messages display in sequence: Uploading → Reading Devanagari text → Translating'
+      - 'Progress indicators visible during processing'
+    time_estimate_minutes: 90
+    dependencies: ['01-03']
+    tests_to_enable:
+      - 'processing-progress.test.tsx: scenario 1'
+      - 'processing-progress.test.tsx: scenario 2'
+      - 'processing-progress.test.tsx: scenario 3'
+  - id: 01-05
+    name: 'Navigation to translation results'
+    description: 'Navigate to translation screen with OCR results after processing completes'
+    criteria:
+      - 'Navigation to /translate route with correct params'
+      - 'OCR confidence score passed in navigation params'
+      - 'Extracted text and translation data available on results screen'
+    time_estimate_minutes: 60
+    dependencies: ['01-04']
+    tests_to_enable:
+      - 'end-to-end-camera-flow.test.tsx: scenario 1'
+- id: '02'
+  name: 'Robustness and UX Polish'
+  description: 'Add retake functionality, zoom verification, first-use onboarding, performance validation, and edge case handling.'
+  steps:
+  - id: 02-01
+    name: 'Retake functionality with state preservation'
+    description: 'Return to camera when Retake tapped, preserve overlay and settings'
+    criteria:
+      - 'Retake button returns to camera view'
+      - 'Frame overlay and guidance text preserved'
+      - 'Session state maintained across retake'
+    time_estimate_minutes: 60
+    dependencies: ['01-03']
+    tests_to_enable:
+      - 'retake-flow.test.tsx: scenario 1'
+      - 'retake-flow.test.tsx: scenario 2'
+      - 'retake-flow.test.tsx: scenario 3'
+  - id: 02-02
+    name: 'Pinch-to-zoom for quality verification'
+    description: 'Enable zoom on preview to verify Devanagari text sharpness'
+    criteria:
+      - 'Preview supports pinch gesture with 3x zoom'
+      - 'Zoom responds to gesture scale and focal point'
+      - 'Zoom resets when returning to camera'
+    time_estimate_minutes: 70
+    dependencies: ['01-03']
+    tests_to_enable:
+      - 'photo-preview-zoom.test.tsx: scenario 3'
+      - 'photo-preview-zoom.test.tsx: scenario 4'
+      - 'photo-preview-zoom.test.tsx: scenario 5'
+  - id: 02-03
+    name: 'Shutter button disable during capture'
+    description: 'Prevent double-tap by disabling shutter during photo capture'
+    criteria:
+      - 'Shutter button disabled when capture in progress'
+      - 'Button state updates during operation'
+      - 'No duplicate captures from rapid taps'
+    time_estimate_minutes: 25
+    dependencies: ['01-02']
+    tests_to_enable:
+      - 'photo-capture.test.tsx: scenario 3'
+  - id: 02-04
+    name: 'First-use lighting tip with persistence'
+    description: 'Show dismissable lighting tip on first camera launch, skip on subsequent uses'
+    criteria:
+      - 'Tip displays on first launch with auto-dismiss after 3 seconds'
+      - 'AsyncStorage flag set after tip shown'
+      - 'Tip not displayed when flag is true'
+      - 'Tip positioned as non-blocking overlay'
+    time_estimate_minutes: 80
+    dependencies: ['01-01']
+    tests_to_enable:
+      - 'first-use-lighting-tip.test.tsx: scenario 1'
+      - 'first-use-lighting-tip.test.tsx: scenario 2'
+      - 'first-use-lighting-tip.test.tsx: scenario 3'
+      - 'first-use-lighting-tip.test.tsx: scenario 4'
+      - 'first-use-lighting-tip.test.tsx: scenario 5'
+      - 'first-use-lighting-tip.test.tsx: scenario 6'
+  - id: 02-05
+    name: 'Multiple retakes with URI cleanup'
+    description: 'Support multiple retake cycles without memory leaks'
+    criteria:
+      - 'Camera functional after 3+ retakes'
+      - 'Previous photo URIs cleaned up on retake'
+      - 'No performance degradation'
+    time_estimate_minutes: 40
+    dependencies: ['02-01']
+    tests_to_enable:
+      - 'retake-flow.test.tsx: scenario 4'
+      - 'retake-flow.test.tsx: scenario 5'
+  - id: 02-06
+    name: 'Processing performance validation'
+    description: 'Ensure end-to-end processing completes within 5 seconds'
+    criteria:
+      - 'Total time from submit to result under 5 seconds'
+      - 'Translation result displays within timeout'
+      - 'Performance validated for typical photos'
+    time_estimate_minutes: 35
+    dependencies: ['01-05']
+    tests_to_enable:
+      - 'processing-progress.test.tsx: scenario 4'
+      - 'processing-progress.test.tsx: scenario 5'
+  - id: 02-07
+    name: 'Retake within end-to-end flow'
+    description: 'Validate retake works correctly in complete user journey'
+    criteria:
+      - 'Retake returns to camera during full flow'
+      - 'Second capture works correctly'
+      - 'Preview displays for retaken photo'
+    time_estimate_minutes: 40
+    dependencies: ['02-01', '01-05']
+    tests_to_enable:
+      - 'end-to-end-camera-flow.test.tsx: scenario 2'
+  - id: 02-08
+    name: 'OCR confidence variations and multi-line handling'
+    description: 'Pass high/low confidence scores and preserve multi-line structure in navigation params'
+    criteria:
+      - 'High confidence (96%) and low confidence (65%) passed correctly'
+      - 'OCR warnings array included for low confidence'
+      - 'Multi-line originalText array preserves 6+ lines in order'
+    time_estimate_minutes: 60
+    dependencies: ['01-05']
+    tests_to_enable:
+      - 'end-to-end-camera-flow.test.tsx: scenario 3'
+      - 'end-to-end-camera-flow.test.tsx: scenario 4'
+      - 'end-to-end-camera-flow.test.tsx: scenario 5'
+  - id: 02-09
+    name: 'Manual dismiss for first-use tip'
+    description: 'Allow user to dismiss lighting tip before auto-dismiss timer'
+    criteria:
+      - 'Dismiss button available on tip'
+      - 'Tip removed immediately when dismissed'
+      - 'Timer cancelled on manual dismiss'
+    time_estimate_minutes: 25
+    dependencies: ['02-04']
+    tests_to_enable:
+      - 'first-use-lighting-tip.test.tsx: scenario 7'
+implementation_scope:
+  source_directories:
+  - app/
+  test_directories:
+  - app/tests/app/camera/
+  excluded_patterns:
+  - node_modules/**
+  - __tests__/**
+  - '*.config.js'
+  - '*.config.ts'
+validation:
+  status: pending
+  reviewer: software-crafter-reviewer
+  review_iteration: 2
+  approved_at: null

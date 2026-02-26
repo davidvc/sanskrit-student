@@ -1,0 +1,131 @@
+events:
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 01-01
+  t: '2026-02-26T00:40:15Z'
+- d: PASS
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 01-01
+  t: '2026-02-26T00:42:27Z'
+- d: 'NOT_APPLICABLE: UI acceptance tests cover all behaviors through driving port
+    (React component). No internal classes to unit test.'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 01-01
+  t: '2026-02-26T00:42:36Z'
+- d: PASS
+  p: GREEN
+  s: EXECUTED
+  sid: 01-01
+  t: '2026-02-26T00:43:13Z'
+- d: PASS
+  p: COMMIT
+  s: EXECUTED
+  sid: 01-01
+  t: '2026-02-26T00:43:41Z'
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 01-02
+  t: '2026-02-26T00:53:50Z'
+- d: PASS
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 01-02
+  t: '2026-02-26T00:53:53Z'
+- d: 'NOT_APPLICABLE: UI acceptance tests only, no unit tests needed'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 01-02
+  t: '2026-02-26T00:53:56Z'
+- d: PASS
+  p: GREEN
+  s: EXECUTED
+  sid: 01-02
+  t: '2026-02-26T00:53:59Z'
+- d: PASS
+  p: COMMIT
+  s: EXECUTED
+  sid: 01-02
+  t: '2026-02-26T00:54:03Z'
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 01-03
+  t: '2026-02-26T00:58:30Z'
+- d: PASS
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 01-03
+  t: '2026-02-26T00:58:33Z'
+- d: 'NOT_APPLICABLE: UI component tested via acceptance tests only'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 01-03
+  t: '2026-02-26T00:58:36Z'
+- d: PASS
+  p: GREEN
+  s: EXECUTED
+  sid: 01-03
+  t: '2026-02-26T00:58:39Z'
+- d: PASS
+  p: COMMIT
+  s: EXECUTED
+  sid: 01-03
+  t: '2026-02-26T00:58:42Z'
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 01-04
+  t: '2026-02-26T01:09:49Z'
+- d: PASS
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 01-04
+  t: '2026-02-26T01:09:52Z'
+- d: 'NOT_APPLICABLE: UI acceptance tests only, no unit tests per project guidelines'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 01-04
+  t: '2026-02-26T01:09:56Z'
+- d: PASS
+  p: GREEN
+  s: EXECUTED
+  sid: 01-04
+  t: '2026-02-26T01:09:59Z'
+- d: PASS
+  p: COMMIT
+  s: EXECUTED
+  sid: 01-04
+  t: '2026-02-26T01:10:02Z'
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 01-05
+  t: '2026-02-26T01:11:21Z'
+- d: 'PASS: Test fails because navigation not implemented (expected behavior)'
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 01-05
+  t: '2026-02-26T01:13:59Z'
+- d: 'NOT_APPLICABLE: UI navigation tested at acceptance level via router.push() mock
+    verification'
+  p: RED_UNIT
+  s: SKIPPED
+  sid: 01-05
+  t: '2026-02-26T01:14:05Z'
+- d: 'PASS: Navigation to /translate implemented, acceptance test passes, all existing
+    tests still pass'
+  p: GREEN
+  s: EXECUTED
+  sid: 01-05
+  t: '2026-02-26T01:15:44Z'
+- d: PASS
+  p: COMMIT
+  s: EXECUTED
+  sid: 01-05
+  t: '2026-02-26T01:16:44Z'
+project_id: ocr-translation
+schema_version: '3.0'

@@ -1,0 +1,227 @@
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { MockedProvider } from '@apollo/client/testing';
+import Camera from '../../../app/camera';
+
+// Mock AsyncStorage for first-use flag persistence
+const mockAsyncStorage = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+};
+
+jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
+
+// Mock expo-camera
+jest.mock('expo-camera', () => ({
+  Camera: ({ children, ...props }: any) => {
+    const { View } = require('react-native');
+    return <View testID="camera-view" {...props}>{children}</View>;
+  },
+  CameraView: ({ children, ...props }: any) => {
+    const { View } = require('react-native');
+    return <View testID="camera-view" {...props}>{children}</View>;
+  },
+  useCameraPermissions: jest.fn(() => [
+    { status: 'granted', granted: true },
+    jest.fn(),
+  ]),
+}));
+
+// Mock expo-router
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+  }),
+}));
+
+describe('Scenario: Show lighting tip on first use', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it.skip('displays lighting tip on first camera launch', async () => {
+    // GIVEN: I am using the app for the first time
+    // AND: I have never seen the lighting tip before
+    mockAsyncStorage.getItem.mockResolvedValue(null); // First-use flag not set
+
+    // WHEN: I tap "Take Photo" to launch the camera
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
+
+    // THEN: I should see a tip message
+    await waitFor(() => {
+      const tipMessage = screen.getByText(/💡 tip.*bright.*even lighting/i);
+      expect(tipMessage).toBeTruthy();
+    });
+
+    // Verify the tip contains expected content
+    const tipMessage = screen.getByText(/💡 tip.*bright.*even lighting/i);
+    expect(tipMessage).toHaveTextContent(/use bright, even lighting for best results/i);
+  });
+
+  it.skip('automatically dismisses lighting tip after 3 seconds', async () => {
+    // GIVEN: I am using the app for the first time
+    mockAsyncStorage.getItem.mockResolvedValue(null);
+
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
+
+    // WHEN: the tip displays
+    await waitFor(() => {
+      const tipMessage = screen.getByText(/💡 tip.*bright.*even lighting/i);
+      expect(tipMessage).toBeTruthy();
+    });
+
+    // AND: 3 seconds pass
+    jest.advanceTimersByTime(3000);
+
+    // THEN: the tip should disappear automatically
+    await waitFor(() => {
+      expect(screen.queryByText(/💡 tip.*bright.*even lighting/i)).toBeNull();
+    });
+  });
+
+  it.skip('sets first-use flag after displaying tip', async () => {
+    // GIVEN: I am using the app for the first time
+    mockAsyncStorage.getItem.mockResolvedValue(null);
+
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
+
+    // WHEN: the tip displays
+    await waitFor(() => {
+      const tipMessage = screen.getByText(/💡 tip.*bright.*even lighting/i);
+      expect(tipMessage).toBeTruthy();
+    });
+
+    // THEN: the first-use flag should be set in storage
+    await waitFor(() => {
+      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+        'camera_lighting_tip_shown',
+        'true'
+      );
+    });
+  });
+
+  it.skip('does not show lighting tip on subsequent uses', async () => {
+    // GIVEN: I use the app a second time
+    // AND: the first-use flag is set
+    mockAsyncStorage.getItem.mockResolvedValue('true');
+
+    // WHEN: I tap "Take Photo"
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
+
+    // THEN: I should NOT see the lighting tip again
+    await waitFor(() => {
+      const cameraView = screen.getByTestId('camera-view');
+      expect(cameraView).toBeTruthy();
+    });
+
+    expect(screen.queryByText(/💡 tip.*bright.*even lighting/i)).toBeNull();
+  });
+
+  it.skip('tip does not interfere with camera functionality', async () => {
+    // GIVEN: I am using the app for the first time
+    mockAsyncStorage.getItem.mockResolvedValue(null);
+
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
+
+    // WHEN: the tip is displayed
+    await waitFor(() => {
+      const tipMessage = screen.getByText(/💡 tip.*bright.*even lighting/i);
+      expect(tipMessage).toBeTruthy();
+    });
+
+    // THEN: I should still be able to use the camera
+    const cameraView = screen.getByTestId('camera-view');
+    expect(cameraView).toBeTruthy();
+
+    const shutterButton = screen.getByTestId('shutter-button');
+    expect(shutterButton).toBeTruthy();
+    expect(shutterButton).not.toHaveAccessibilityState({ disabled: true });
+  });
+
+  it.skip('tip displays as overlay, not blocking camera view', async () => {
+    // GIVEN: I am using the app for the first time
+    mockAsyncStorage.getItem.mockResolvedValue(null);
+
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
+
+    // WHEN: the tip is displayed
+    await waitFor(() => {
+      const tipMessage = screen.getByText(/💡 tip.*bright.*even lighting/i);
+      expect(tipMessage).toBeTruthy();
+    });
+
+    // THEN: the tip should be positioned as an overlay
+    const tipContainer = screen.getByTestId('lighting-tip-container');
+    expect(tipContainer).toBeTruthy();
+
+    // Verify tip doesn't block camera view
+    const cameraView = screen.getByTestId('camera-view');
+    expect(cameraView).toBeTruthy();
+
+    // Tip should have overlay styling (e.g., positioned absolutely)
+    expect(tipContainer).toHaveStyle({ position: 'absolute' });
+  });
+
+  it.skip('can manually dismiss tip before 3 seconds', async () => {
+    // GIVEN: I am using the app for the first time
+    mockAsyncStorage.getItem.mockResolvedValue(null);
+
+    render(
+      <MockedProvider mocks={[]}>
+        <Camera />
+      </MockedProvider>
+    );
+
+    // WHEN: the tip is displayed
+    await waitFor(() => {
+      const tipMessage = screen.getByText(/💡 tip.*bright.*even lighting/i);
+      expect(tipMessage).toBeTruthy();
+    });
+
+    // AND: I tap the dismiss button (if provided)
+    const dismissButton = screen.queryByTestId('dismiss-tip-button');
+    if (dismissButton) {
+      fireEvent.press(dismissButton);
+
+      // THEN: the tip should disappear immediately
+      await waitFor(() => {
+        expect(screen.queryByText(/💡 tip.*bright.*even lighting/i)).toBeNull();
+      });
+    }
+
+    // Tip should auto-dismiss even without manual dismiss button
+  });
+});
