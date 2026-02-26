@@ -17,3 +17,4 @@ dist/
 .beads/
 .logs/
 .vercel
+.env*.local
