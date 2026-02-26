@@ -12,8 +12,8 @@ export default function Index() {
           <Text style={styles.buttonText}>Start Translating</Text>
         </Link>
 
-        <Link href="/camera" style={[styles.button, styles.buttonSecondary]}>
-          <Text style={styles.buttonText}>Camera (Coming Soon)</Text>
+        <Link href="/camera" style={styles.button}>
+          <Text style={styles.buttonText}>Photograph Text (OCR)</Text>
         </Link>
 
         <Link href="/history" style={[styles.button, styles.buttonSecondary]}>

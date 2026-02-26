@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
-import { CameraView } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useTranslateSutraFromImageMutation } from '../lib/graphql/generated';
 import { GestureHandlerRootView, PinchGestureHandler, State } from 'react-native-gesture-handler';
@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 type ProgressState = 'idle' | 'uploading' | 'ocr' | 'translating' | 'complete';
 
 export default function Camera() {
+  const [permission, requestPermission] = useCameraPermissions();
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [progressState, setProgressState] = useState<ProgressState>('idle');
@@ -155,6 +156,38 @@ export default function Camera() {
     }
   };
 
+  // Handle camera permission states
+  if (!permission) {
+    // Permission info is loading
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.progressText}>Loading camera...</Text>
+      </View>
+    );
+  }
+
+  if (!permission.granted) {
+    // Permission not granted - show request UI
+    return (
+      <View style={styles.container}>
+        <View style={styles.permissionContainer}>
+          <Text style={styles.permissionTitle}>Camera Access Required</Text>
+          <Text style={styles.permissionText}>
+            Sanskrit Student needs access to your camera to photograph Devanagari text for translation.
+          </Text>
+          <TouchableOpacity
+            style={styles.permissionButton}
+            onPress={requestPermission}
+            testID="request-camera-permission-button"
+          >
+            <Text style={styles.permissionButtonText}>Grant Camera Permission</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   // Show progress messages
   if (progressState !== 'idle') {
     const progressMessages = {
@@ -260,6 +293,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#000',
+  },
+  permissionContainer: {
+    padding: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 16,
+    maxWidth: 340,
+    alignItems: 'center',
+  },
+  permissionTitle: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  permissionText: {
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  permissionButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    width: '100%',
+  },
+  permissionButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   camera: {
     flex: 1,
