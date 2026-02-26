@@ -163,5 +163,25 @@ events:
   s: EXECUTED
   sid: 02-01
   t: '2026-02-26T01:35:38Z'
+- d: PASS
+  p: PREPARE
+  s: EXECUTED
+  sid: 02-03
+  t: '2026-02-26T01:37:03Z'
+- d: PASS
+  p: RED_ACCEPTANCE
+  s: EXECUTED
+  sid: 02-03
+  t: '2026-02-26T01:37:30Z'
+- d: SKIPPED
+  p: RED_UNIT
+  s: EXECUTED
+  sid: 02-03
+  t: '2026-02-26T01:37:35Z'
+- d: PASS
+  p: GREEN
+  s: EXECUTED
+  sid: 02-03
+  t: '2026-02-26T01:37:46Z'
 project_id: ocr-translation
 schema_version: '3.0'

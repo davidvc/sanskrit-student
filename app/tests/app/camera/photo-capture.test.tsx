@@ -95,7 +95,7 @@ describe('Scenario: Capture photo with manual shutter', () => {
     expect(previewImage).toHaveProp('source', { uri: 'file:///mock-photo.jpg' });
   });
 
-  it.skip('disables shutter button during capture to prevent double-tap', async () => {
+  it('disables shutter button during capture to prevent double-tap', async () => {
     // GIVEN: the camera is open
     render(
       <MockedProvider mocks={[]}>
