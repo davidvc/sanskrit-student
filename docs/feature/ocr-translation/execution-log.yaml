@@ -173,11 +173,12 @@ events:
   s: EXECUTED
   sid: 02-03
   t: '2026-02-26T01:37:30Z'
-- d: SKIPPED
+- d: PASS
   p: RED_UNIT
-  s: EXECUTED
+  s: SKIPPED
   sid: 02-03
   t: '2026-02-26T01:37:35Z'
+  reason: 'UI component fully covered by acceptance test - no additional unit tests needed'
 - d: PASS
   p: GREEN
   s: EXECUTED
