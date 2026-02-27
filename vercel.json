@@ -1,14 +1,15 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build && cd app && npm install && npm run codegen && npx expo export -p web",
+  "outputDirectory": "app/dist",
   "framework": null,
   "rewrites": [
     {
-      "source": "/",
-      "destination": "/api/index"
-    },
-    {
       "source": "/graphql",
       "destination": "/api/graphql"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/app/$1"
     }
   ],
   "env": {
