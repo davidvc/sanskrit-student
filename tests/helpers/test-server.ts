@@ -4,6 +4,7 @@ import { MockOcrEngine } from '../../src/adapters/mock-ocr-engine';
 import { InMemoryImageStorage } from '../../src/adapters/in-memory-image-storage';
 import { ImageValidatorFactory } from '../../src/adapters/image-validator-factory';
 import { ImageValidator } from '../../src/domain/image-validator';
+import { OcrEngine } from '../../src/domain/ocr-engine';
 
 /**
  * Test-specific dependencies that can be configured by tests.
@@ -42,6 +43,14 @@ export interface TestServer {
 }
 
 /**
+ * Options for creating a test server with custom dependencies.
+ */
+export interface TestServerOptions {
+  /** Override the OCR engine. Defaults to MockOcrEngine. */
+  ocrEngine?: OcrEngine;
+}
+
+/**
  * Creates a test server instance for acceptance testing.
  *
  * This is the composition root for tests. Mock dependencies are created here
@@ -49,9 +58,13 @@ export interface TestServer {
  * via the TestServer interface, allowing tests to configure them without
  * instanceof coupling.
  *
+ * Pass `ocrEngine` to substitute a real engine (e.g. GoogleVisionOcrEngine)
+ * while keeping all other dependencies mocked.
+ *
+ * @param options - Optional overrides for specific dependencies
  * @returns Test server with mock dependencies accessible via .mocks
  */
-export function createTestServer(): TestServer {
+export function createTestServer(options: TestServerOptions = {}): TestServer {
   // Create all mock dependencies (composition root for tests)
   const mocks: TestMocks = {
     llmClient: new MockLlmClient(),
@@ -60,8 +73,13 @@ export function createTestServer(): TestServer {
     imageValidator: ImageValidatorFactory.createComposite(),
   };
 
+  const deps = {
+    ...mocks,
+    ...(options.ocrEngine ? { ocrEngine: options.ocrEngine } : {}),
+  };
+
   // Wire dependencies through createConfig (same composition logic as production)
-  const config = createConfig(mocks);
+  const config = createConfig(deps);
   const yoga = createServer(config);
 
   return {
