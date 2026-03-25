@@ -9,11 +9,15 @@ const config = getDefaultConfig(__dirname);
 //   2. We're already inside react-native's native Libraries (e.g., after following a deep import
 //      from gesture-handler) and encounter another unresolvable native import.
 // In both cases, returning an empty module prevents the __fbBatchedBridgeConfig runtime error.
+// Sources confirmed via grep in node_modules:
+//   react-native-gesture-handler/lib/commonjs/specs/*.js → codegenNativeComponent
+//   react-native-reanimated/lib/module/reanimated2/fabricUtils.js → ReactFabric shim
 const NATIVE_ONLY_PATH_PREFIXES = [
   'react-native/Libraries/BatchedBridge/',
   'react-native/Libraries/TurboModule/',
   'react-native/Libraries/Utilities/codegenNativeComponent',
   'react-native/Libraries/Utilities/codegenNativeCommands',
+  'react-native/Libraries/Renderer/shims/',
 ];
 
 const _resolveRequest = config.resolver.resolveRequest;
