@@ -53,12 +53,12 @@ Feature: Google Cloud Vision OCR Adapter
     Then the result text should be ""
     And the result confidence should be 0.0
 
-  Scenario: Mixed script image - adapter returns full API output
-    Given an image buffer containing both Latin and Devanagari text
-    And the Vision API returns the combined extracted text
+  Scenario: Mixed script image - adapter returns full API output without filtering
+    Given an image buffer containing both Latin and Devanagari text "Hello योग"
+    And the Vision API returns the text "Hello योग" with confidence 0.91
     When I call extractText with the image buffer
-    Then the result should contain the combined text as returned by the API
-    And confidence should reflect the API-reported value
+    Then the result text should be "Hello योग"
+    And the result confidence should be 0.91
 
   Scenario: Confidence score is normalised to the 0.0-1.0 range
     Given the Vision API returns a confidence value expressed as a percentage (e.g. 95)
