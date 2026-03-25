@@ -12,7 +12,8 @@ import { OcrEngine } from './domain/ocr-engine';
 import { ImageStorageStrategy } from './domain/image-storage-strategy';
 import { ImageValidator } from './domain/image-validator';
 import { ImageValidatorFactory } from './adapters/image-validator-factory';
-import { MockOcrEngine } from './adapters/mock-ocr-engine';
+import { GoogleVisionOcrEngine } from './adapters/google-vision-ocr-engine';
+import { GcpAuthClientProvider } from './adapters/gcp-auth-client-provider';
 import { InMemoryImageStorage } from './adapters/in-memory-image-storage';
 
 /**
@@ -118,15 +119,19 @@ export function createConfig(deps: ServerDependencies): ServerConfig {
 
 /**
  * Creates a ServerConfig for production.
- * This is the composition root for production - creates real dependencies.
  *
+ * Accepts a GcpAuthClientProvider so the deployment environment's
+ * authentication strategy can be injected without coupling this function
+ * to any specific platform.
+ *
+ * @param authProvider - Strategy for obtaining a GCP auth client
  * @returns Complete server configuration with all services (translation and OCR)
  */
-export function createProductionConfig(): ServerConfig {
+export async function createProductionConfig(authProvider: GcpAuthClientProvider): Promise<ServerConfig> {
+  const authClient = await authProvider.createAuthClient();
   const deps: ServerDependencies = {
     llmClient: new ClaudeLlmClient(),
-    // TODO: Replace with production OCR implementation when available
-    ocrEngine: new MockOcrEngine(),
+    ocrEngine: new GoogleVisionOcrEngine(authClient ? { authClient } : {}),
     imageStorage: new InMemoryImageStorage(),
     imageValidator: ImageValidatorFactory.createComposite(),
   };

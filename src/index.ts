@@ -5,6 +5,8 @@ import { MockLlmClient } from './adapters/mock-llm-client';
 import { MockOcrEngine } from './adapters/mock-ocr-engine';
 import { InMemoryImageStorage } from './adapters/in-memory-image-storage';
 import { ImageValidatorFactory } from './adapters/image-validator-factory';
+import { VercelGcpAuthClientProvider } from './adapters/vercel-gcp-auth';
+import { DefaultGcpAuthClientProvider } from './adapters/gcp-auth-client-provider';
 
 const DEFAULT_PORT = 4000;
 
@@ -25,7 +27,10 @@ async function main() {
     };
     config = createConfig(deps);
   } else {
-    config = createProductionConfig();
+    const authProvider = process.env.VERCEL
+      ? new VercelGcpAuthClientProvider()
+      : new DefaultGcpAuthClientProvider();
+    config = await createProductionConfig(authProvider);
   }
 
   const yoga = createServer(config);
