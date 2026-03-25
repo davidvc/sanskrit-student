@@ -1,3 +1,4 @@
+import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { OcrEngine, OcrResult, OcrOptions } from '../domain/ocr-engine';
 
 /**
@@ -97,13 +98,10 @@ export class GoogleVisionOcrEngine implements OcrEngine {
    * Creates the real @google-cloud/vision ImageAnnotatorClient.
    *
    * Not exercised in tests — tests inject a stub client directly.
+   * Uses ADC when no credentials are provided (recommended for production).
    */
   private createVisionClient(options: GoogleVisionOcrEngineOptions): VisionClient {
-    // Deferred: requires @google-cloud/vision to be installed at runtime
-    throw new Error(
-      'GoogleVisionOcrEngine: real Vision client requires @google-cloud/vision. ' +
-      'Pass a VisionClient stub in tests or install the package for production use.'
-    );
+    return new ImageAnnotatorClient(options) as unknown as VisionClient;
   }
 
   /**
