@@ -25,30 +25,35 @@ into the regular test suite.
 
 ### Credentials
 
-**Step 1 — Get a service account key**
+#### Local development — Application Default Credentials (ADC)
 
-1. Go to [console.cloud.google.com](https://console.cloud.google.com)
-2. Create or select a project and enable the **Cloud Vision API**
-3. Navigate to **IAM & Admin → Service Accounts**
-4. Create a service account, grant it the **Cloud Vision API User** role, generate
-   a JSON key, and download it
+Service account key files are a security risk and are not used for local
+development. Instead, authenticate once with your Google account:
 
-**Step 2 — Set the environment variable**
-
-`GOOGLE_CLOUD_VISION_CREDENTIALS` must contain the full JSON content of the
-service account key (not a file path).
-
-For local development, create a `.env` file in the project root (already
-gitignored — never commit this):
-
-```
-GOOGLE_CLOUD_VISION_CREDENTIALS={"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}
+```bash
+gcloud auth application-default login
 ```
 
-The e2e tests load this automatically via `dotenv`.
+This writes short-lived credentials to
+`~/.config/gcloud/application_default_credentials.json`. The
+`@google-cloud/vision` library finds that file automatically — no environment
+variable, no key file, and no code changes required. The e2e tests call
+`new GoogleVisionOcrEngine()` with no credentials argument, so ADC is used
+transparently.
 
-For GitHub Actions, add the same JSON string as a repository secret named
-`GOOGLE_CLOUD_VISION_CREDENTIALS` (see CI configuration below).
+You must have access to a Google Cloud project with the **Cloud Vision API
+enabled**. Run this once to set the quota project:
+
+```bash
+gcloud auth application-default set-quota-project YOUR_PROJECT_ID
+```
+
+#### CI — Workload Identity Federation (recommended)
+
+Avoid storing long-lived service account keys as CI secrets. Instead, use
+**Workload Identity Federation** to allow GitHub Actions to authenticate as a
+service account without a key file. Setup is a one-time task in Google Cloud
+Console — see the CI configuration section below for details.
 
 ### Image fixtures
 
@@ -69,20 +74,17 @@ suitable source images:
 tests/e2e/google-vision-ocr-engine.e2e.ts
 ```
 
-Reads `GOOGLE_CLOUD_VISION_CREDENTIALS`, parses it as JSON, and passes it to
-`GoogleVisionOcrEngine` as the `credentials` option:
+Creates `GoogleVisionOcrEngine` with no credentials argument. The
+`@google-cloud/vision` library resolves credentials automatically via ADC
+(locally) or the environment configured by the CI workflow:
 
 ```typescript
-import 'dotenv/config';
 import { GoogleVisionOcrEngine } from '../../src/adapters/google-vision-ocr-engine';
 
-const credentials = JSON.parse(process.env.GOOGLE_CLOUD_VISION_CREDENTIALS!);
-const engine = new GoogleVisionOcrEngine({ credentials });
+const engine = new GoogleVisionOcrEngine();
 ```
 
-If `GOOGLE_CLOUD_VISION_CREDENTIALS` is missing, the test file throws at load
-time with a clear message. This is intentional — `npm run test:e2e` is always
-a deliberate act that requires credentials to be configured.
+No `dotenv` import is needed — there is no credentials env var to load.
 
 ---
 
@@ -145,10 +147,13 @@ const badEngine = new GoogleVisionOcrEngine({
 
 ---
 
-### TC4 — Invalid image buffer throws OcrInvalidImageError
+### TC4 — Invalid image buffer returns empty result
 
-**Why:** Verifies the error mapping path for a rejected image payload — the
-other error scenario reliably triggerable without special infrastructure.
+**Why:** Verifies the adapter handles unrecognised binary content without
+throwing. The live Vision API treats arbitrary bytes leniently — it returns
+no annotations rather than rejecting the request with INVALID_ARGUMENT.
+The `OcrInvalidImageError` mapping for gRPC INVALID_ARGUMENT is verified in
+the adapter tests using a stubbed client.
 
 **Setup:** `invalid.bin` loaded as a Buffer (non-image bytes).
 
@@ -156,8 +161,9 @@ other error scenario reliably triggerable without special infrastructure.
 1. Call `engine.extractText(invalidBuffer)`
 
 **Assertions:**
-- Throws `OcrInvalidImageError`
-- Error message describes the rejection reason
+- Does not throw
+- `result.text` is `''`
+- `result.confidence` is `0.0`
 
 ---
 
@@ -168,6 +174,7 @@ other error scenario reliably triggerable without special infrastructure.
 | Rate limit (`OcrRateLimitError`) | Cannot trigger deterministically against live API |
 | Service unavailable (`OcrServiceUnavailableError`) | Cannot trigger deterministically |
 | Unexpected error (`OcrError` fallback) | Cannot trigger deterministically |
+| `OcrInvalidImageError` for corrupt payload | Live API returns empty result rather than INVALID_ARGUMENT for arbitrary bytes; covered by adapter tests with stub |
 | Language hints wiring (AC2) | Requires inspecting the API request, not the response; verified in adapter tests |
 | Detected language field (AC3) | Not yet implemented; verify on `OcrResult.language` once AC3 is complete |
 | Confidence normalisation (AC6) | Covered by TC1 range assertion; edge-case input requires a stub |
@@ -180,10 +187,14 @@ a stubbed Vision client. See `high-level-design.md` cycles 8, 9, 11.
 ## Running the tests
 
 ```bash
-# Regular test suite — never uses real credentials, always uses MockOcrEngine
+# One-time setup — authenticate with your Google account
+gcloud auth application-default login
+gcloud auth application-default set-quota-project YOUR_PROJECT_ID
+
+# Regular test suite — never touches real credentials, always uses MockOcrEngine
 npm test
 
-# E2E suite — requires GOOGLE_CLOUD_VISION_CREDENTIALS in .env or environment
+# E2E suite — uses ADC credentials set up above
 npm run test:e2e
 ```
 
@@ -191,8 +202,51 @@ npm run test:e2e
 
 ## CI configuration
 
-Add a GitHub Actions workflow that runs on demand or on a schedule. The
-service account JSON is stored as a repository secret.
+Use **Workload Identity Federation** so GitHub Actions can authenticate as a
+service account without a long-lived key file. This is a one-time setup in
+Google Cloud.
+
+**Step 1 — Create a Workload Identity Pool and Provider (run once):**
+
+```bash
+# Create the pool
+gcloud iam workload-identity-pools create "github-actions" \
+  --project="YOUR_PROJECT_ID" \
+  --location="global" \
+  --display-name="GitHub Actions"
+
+# Create the OIDC provider pointing at GitHub
+gcloud iam workload-identity-pools providers create-oidc "github-provider" \
+  --project="YOUR_PROJECT_ID" \
+  --location="global" \
+  --workload-identity-pool="github-actions" \
+  --issuer-uri="https://token.actions.githubusercontent.com" \
+  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository"
+```
+
+**Step 2 — Create a service account and grant it Vision API access:**
+
+```bash
+gcloud iam service-accounts create vision-e2e \
+  --project="YOUR_PROJECT_ID" \
+  --display-name="Vision E2E Tests"
+
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+  --member="serviceAccount:vision-e2e@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/cloudvision.user"
+```
+
+**Step 3 — Allow GitHub Actions to impersonate the service account:**
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding \
+  vision-e2e@YOUR_PROJECT_ID.iam.gserviceaccount.com \
+  --project="YOUR_PROJECT_ID" \
+  --role="roles/iam.workloadIdentityUser" \
+  --member="principalSet://iam.googleapis.com/projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/github-actions/attribute.repository/YOUR_GITHUB_ORG/YOUR_REPO"
+```
+
+**Step 4 — GitHub Actions workflow:**
 
 ```yaml
 # .github/workflows/e2e-vision.yml
@@ -206,19 +260,22 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required for Workload Identity Federation
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/github-actions/providers/github-provider
+          service_account: vision-e2e@YOUR_PROJECT_ID.iam.gserviceaccount.com
       - run: npm ci
       - run: npm run test:e2e
-        env:
-          GOOGLE_CLOUD_VISION_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_VISION_CREDENTIALS }}
 ```
 
-**To add the secret:**
-1. Go to the repository on GitHub → **Settings → Secrets and variables → Actions**
-2. Click **New repository secret**
-3. Name: `GOOGLE_CLOUD_VISION_CREDENTIALS`
-4. Value: paste the full contents of the service account JSON file
+The `google-github-actions/auth` step sets `GOOGLE_APPLICATION_CREDENTIALS` in
+the environment, which the Vision library picks up automatically — no secrets
+stored in GitHub.

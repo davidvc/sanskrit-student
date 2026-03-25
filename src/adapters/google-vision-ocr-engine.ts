@@ -1,5 +1,20 @@
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { OcrEngine, OcrResult, OcrOptions } from '../domain/ocr-engine';
+import {
+  OcrError,
+  OcrAuthenticationError,
+  OcrRateLimitError,
+  OcrServiceUnavailableError,
+  OcrInvalidImageError,
+} from '../domain/ocr-errors';
+
+const GRPC_UNKNOWN = 2;
+const GRPC_INVALID_ARGUMENT = 3;
+const GRPC_UNAUTHENTICATED = 16;
+const GRPC_RESOURCE_EXHAUSTED = 8;
+const GRPC_UNAVAILABLE = 14;
+
+const CREDENTIAL_ERROR_PATTERN = /getting metadata from plugin failed|invalid_grant|invalid credentials/i;
 
 /**
  * Shape of a Vision API page from documentTextDetection response.
@@ -111,11 +126,44 @@ export class GoogleVisionOcrEngine implements OcrEngine {
    * @param options - OCR options including language hints
    * @returns Extracted text, confidence score, and detected language
    */
-  // TODO: AC7-AC11 — catch Vision API errors and map to OcrError subtypes
   async extractText(imageBuffer: Buffer, options?: OcrOptions): Promise<OcrResult> {
     const request = this.buildRequest(imageBuffer, options);
-    const [response] = await this.client.documentTextDetection(request);
-    return this.mapResponse(response);
+    try {
+      const [response] = await this.client.documentTextDetection(request);
+      return this.mapResponse(response);
+    } catch (error) {
+      throw this.mapError(error);
+    }
+  }
+
+  /**
+   * Maps a Vision API error to a domain OcrError subtype.
+   *
+   * Uses the gRPC status code on the error object. Falls back to OcrError
+   * for any unrecognised code, preserving the original error as `cause`.
+   */
+  private mapError(error: unknown): OcrError {
+    const code = (error as { code?: number }).code;
+    const cause = { cause: error instanceof Error ? error : new Error(String(error)) };
+    const message = cause.cause.message;
+
+    switch (code) {
+      case GRPC_UNAUTHENTICATED:
+        return new OcrAuthenticationError(`Vision API authentication failed: ${message}`, cause);
+      case GRPC_UNKNOWN:
+        if (CREDENTIAL_ERROR_PATTERN.test(message)) {
+          return new OcrAuthenticationError(`Vision API authentication failed: ${message}`, cause);
+        }
+        return new OcrError(`Vision API error: ${message}`, 'OcrError', cause);
+      case GRPC_RESOURCE_EXHAUSTED:
+        return new OcrRateLimitError(`Vision API rate limit exceeded: ${message}`, cause);
+      case GRPC_UNAVAILABLE:
+        return new OcrServiceUnavailableError(`Vision API temporarily unavailable: ${message}`, cause);
+      case GRPC_INVALID_ARGUMENT:
+        return new OcrInvalidImageError(message, cause);
+      default:
+        return new OcrError(`Vision API error: ${message}`, 'OcrError', cause);
+    }
   }
 
   /**
