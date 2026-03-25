@@ -25,28 +25,22 @@ Feature: Google Cloud Vision OCR Adapter
   # ───────────────────────────────────────────────────────────────
 
   Scenario: Extract Devanagari text from a clear image
-    Given a PNG image buffer containing clear Devanagari text "सत्यमेव जयते"
+    Given an image buffer containing clear Devanagari text "सत्यमेव जयते"
     And the Google Cloud Vision API returns that text with confidence 0.96
     When I call extractText with the image buffer
     Then the result text should be "सत्यमेव जयते"
     And the result confidence should be 0.96
 
   Scenario: Language hints are passed to the Vision API
-    Given a PNG image buffer containing Devanagari text
+    Given an image buffer containing Devanagari text
     When I call extractText with language hints ["hi", "sa"]
     Then the Google Cloud Vision API request should include language hints ["hi", "sa"]
 
   Scenario: Detected language is returned in the result
-    Given a PNG image buffer containing Devanagari text
+    Given an image buffer containing Devanagari text
     And the Google Cloud Vision API returns detected locale "sa"
     When I call extractText with the image buffer
     Then the result language should be "sa"
-
-  Scenario: Successful extraction from a JPEG image
-    Given a JPEG image buffer containing Devanagari text
-    And the Google Cloud Vision API returns the text successfully
-    When I call extractText with the image buffer
-    Then the result should contain the extracted text with a confidence score
 
   # ───────────────────────────────────────────────────────────────
   # Edge Cases
