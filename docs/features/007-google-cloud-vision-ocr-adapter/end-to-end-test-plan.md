@@ -10,20 +10,35 @@ only the key scenarios that cannot be verified with stubs.
 
 ### Credentials
 
-Set up once per machine. Either option works:
+Credentials are supplied via a single environment variable containing the service
+account JSON. This works identically locally (via `.env`) and in GitHub Actions
+(via a repository secret).
 
-**Option A — Application Default Credentials (simplest):**
-```bash
-gcloud auth application-default login
+**Step 1 — Get a service account key**
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com)
+2. Create or select a project and enable the **Cloud Vision API**
+3. Navigate to **IAM & Admin → Service Accounts**
+4. Create a service account, grant it the **Cloud Vision API User** role, generate
+   a JSON key, and download it
+
+**Step 2 — Set the environment variable**
+
+The variable `GOOGLE_CLOUD_VISION_CREDENTIALS` must contain the full JSON content
+of the service account key (not a file path).
+
+For local development, create a `.env` file in the project root (already
+gitignored — never commit this):
+
+```
+GOOGLE_CLOUD_VISION_CREDENTIALS={"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}
 ```
 
-**Option B — Service account key file:**
-```bash
-export GOOGLE_CLOUD_VISION_KEY_FILE=~/.config/gcloud/sanskrit-student-vision-key.json
-```
+The tests load this automatically via `dotenv`. If the variable is absent, all
+E2E tests are skipped — they will never block `npm test`.
 
-Tests detect credentials automatically. If neither is set, all E2E tests are
-skipped — they will never block `npm test`.
+For GitHub Actions, add the same JSON string as a repository secret named
+`GOOGLE_CLOUD_VISION_CREDENTIALS` (see CI configuration below).
 
 ### Image fixtures
 
@@ -34,7 +49,7 @@ suitable source images:
 |---|---|---|
 | `clear-devanagari.png` | Copy `devanagari-test-input.png` | Printed Devanagari text, clean background |
 | `no-text.png` | Any blank image | No readable text at all |
-| `invalid.bin` | Create with `echo "notanimage" > invalid.bin` | Corrupt/non-image bytes |
+| `invalid.bin` | `echo "notanimage" > invalid.bin` | Corrupt/non-image bytes |
 
 ---
 
@@ -44,9 +59,16 @@ suitable source images:
 tests/e2e/google-vision-ocr-engine.e2e.ts
 ```
 
-Uses `createTestServer({ ocrEngine: new GoogleVisionOcrEngine(...) })` to swap
-in the real OCR engine while keeping the LLM client, image storage, and
-validator mocked. All tests are wrapped in `describe.skipIf(!hasCredentials)`.
+Reads `GOOGLE_CLOUD_VISION_CREDENTIALS`, parses it as JSON, and passes it to
+`GoogleVisionOcrEngine` as the `credentials` option. All tests are wrapped in
+`describe.skipIf(!hasCredentials)`.
+
+```typescript
+const credentialsJson = process.env.GOOGLE_CLOUD_VISION_CREDENTIALS;
+const hasCredentials = !!credentialsJson;
+const credentials = hasCredentials ? JSON.parse(credentialsJson!) : undefined;
+const engine = new GoogleVisionOcrEngine({ credentials });
+```
 
 ---
 
@@ -132,26 +154,61 @@ other error scenario reliably triggerable without special infrastructure.
 | Rate limit (`OcrRateLimitError`) | Cannot trigger deterministically against live API |
 | Service unavailable (`OcrServiceUnavailableError`) | Cannot trigger deterministically |
 | Unexpected error (`OcrError` fallback) | Cannot trigger deterministically |
-| Language hints wiring (AC2) | Requires inspecting the API request, not the response; verified in adapter unit tests |
-| Detected language field (AC3) | Not yet in the GraphQL schema; verify directly on `OcrResult.language` once AC3 is implemented |
-| Confidence normalisation (AC6) | Covered by TC1 confidence range assertion; edge-case input requires a stub |
+| Language hints wiring (AC2) | Requires inspecting the API request, not the response; verified in adapter tests |
+| Detected language field (AC3) | Not yet implemented; verify on `OcrResult.language` once AC3 is complete |
+| Confidence normalisation (AC6) | Covered by TC1 range assertion; edge-case input requires a stub |
 
-The three untestable error paths (rate limit, service unavailable, unexpected)
-are verified in the TDD acceptance tests using a stubbed Vision client. See
-`high-level-design.md` cycles 8, 9, 11.
+The three untestable error paths are verified in the TDD acceptance tests using
+a stubbed Vision client. See `high-level-design.md` cycles 8, 9, 11.
 
 ---
 
 ## Running the tests
 
 ```bash
-# Skip E2E tests (default — credentials not required)
+# Skip E2E tests (default — no credentials required)
 npm test
 
-# Run E2E tests with ADC
+# Run E2E tests locally (reads GOOGLE_CLOUD_VISION_CREDENTIALS from .env)
 npx vitest run tests/e2e/google-vision-ocr-engine.e2e.ts
 
-# Run E2E tests with key file
-GOOGLE_CLOUD_VISION_KEY_FILE=~/.config/gcloud/key.json \
+# Run E2E tests with credentials set inline
+GOOGLE_CLOUD_VISION_CREDENTIALS='{"type":"service_account",...}' \
   npx vitest run tests/e2e/google-vision-ocr-engine.e2e.ts
 ```
+
+---
+
+## CI configuration
+
+Add a GitHub Actions workflow that runs on demand (or on a schedule). The
+service account JSON is stored as a repository secret.
+
+```yaml
+# .github/workflows/e2e-vision.yml
+name: E2E — Google Cloud Vision
+
+on:
+  workflow_dispatch:       # run manually from the Actions tab
+  schedule:
+    - cron: '0 2 * * *'   # optional: nightly at 02:00 UTC
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npx vitest run tests/e2e/google-vision-ocr-engine.e2e.ts
+        env:
+          GOOGLE_CLOUD_VISION_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_VISION_CREDENTIALS }}
+```
+
+**To add the secret:**
+1. Go to the repository on GitHub → **Settings → Secrets and variables → Actions**
+2. Click **New repository secret**
+3. Name: `GOOGLE_CLOUD_VISION_CREDENTIALS`
+4. Value: paste the full contents of the service account JSON file
