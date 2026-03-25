@@ -1,6 +1,6 @@
 # Sanskrit Student
 
-A Sanskrit translation tool that provides word-by-word breakdowns and multiple translation options. Translate text directly or upload images containing Devanagari script.
+Here is a Sanskrit translation tool that provides word-by-word breakdowns and multiple translation options. Translate text directly or upload images containing Devanagari script.
 
 ## Features
 
