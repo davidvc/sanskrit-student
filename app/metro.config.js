@@ -2,32 +2,37 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
-// Native-only react-native internals that must be stubbed out on web.
-// These bypass the react-native → react-native-web alias and cause
-// runtime errors if bundled.
+// Native-only react-native paths that must never be bundled on web.
+// Two layers of protection:
 //
-// Confirmed offenders (grep node_modules to reverify after upgrades):
-//   react-native-gesture-handler/lib/commonjs/specs/RNGestureHandler*NativeComponent.js
-//     → react-native/Libraries/Utilities/codegenNativeComponent
-//   react-native-reanimated/lib/module/reanimated2/fabricUtils.js
-//     → react-native/Libraries/Renderer/shims/ReactFabric
-const WEB_NATIVE_STUB_MODULES = new Set([
+// 1. Prefix block — any absolute import starting with these paths is stubbed.
+//    These files exist on disk so they resolve fine, but executing them on web
+//    triggers the __fbBatchedBridgeConfig runtime error.
+//    Confirmed offenders:
+//      BatchedBridge/NativeModules.js     → __fbBatchedBridgeConfig crash
+//      TurboModule/*                      → native module registry, web-incompatible
+//      codegenNativeComponent             → gesture-handler specs
+//      codegenNativeCommands              → gesture-handler specs
+//      Renderer/shims/ReactFabric         → reanimated fabricUtils
+//
+// 2. Catch-all — when Metro is already traversing inside react-native/Libraries/
+//    and hits a relative import that can't be resolved on web (e.g. Platform with
+//    no .web.js), catch the error and return empty rather than crashing the build.
+const WEB_NATIVE_STUB_PREFIXES = [
+  'react-native/Libraries/BatchedBridge/',
+  'react-native/Libraries/TurboModule/',
   'react-native/Libraries/Utilities/codegenNativeComponent',
-  'react-native/Libraries/Renderer/shims/ReactFabric',
-]);
+  'react-native/Libraries/Utilities/codegenNativeCommands',
+  'react-native/Libraries/Renderer/shims/',
+];
 
 const _resolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (platform === 'web') {
-    // Stub confirmed native-only absolute imports.
-    if (WEB_NATIVE_STUB_MODULES.has(moduleName)) {
+    if (WEB_NATIVE_STUB_PREFIXES.some(prefix => moduleName.startsWith(prefix))) {
       return { type: 'empty' };
     }
 
-    // When Metro is already traversing inside react-native's own Libraries
-    // (e.g. ViewNativeComponent.js importing Platform, which has no .web.js),
-    // catch resolution failures and return empty rather than crashing the build.
-    // react-native-web provides the actual web implementations of these components.
     if (
       context.originModulePath.includes('/react-native/Libraries/') &&
       !context.originModulePath.includes('/react-native-web/')
