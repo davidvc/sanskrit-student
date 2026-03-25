@@ -6,13 +6,24 @@ only the key scenarios that cannot be verified with stubs.
 
 ---
 
+## Test suite separation
+
+E2E tests and regular tests are completely independent suites:
+
+| Command | Files run | Credentials required |
+|---|---|---|
+| `npm test` | `tests/**/*.test.ts` | No — always uses MockOcrEngine |
+| `npm run test:e2e` | `tests/e2e/**/*.e2e.ts` | Yes — uses real Vision API |
+
+`npm test` will never load or execute e2e files, regardless of whether
+credentials are present in the environment. The mock OCR engine is hardwired
+into the regular test suite.
+
+---
+
 ## Prerequisites
 
 ### Credentials
-
-Credentials are supplied via a single environment variable containing the service
-account JSON. This works identically locally (via `.env`) and in GitHub Actions
-(via a repository secret).
 
 **Step 1 — Get a service account key**
 
@@ -24,8 +35,8 @@ account JSON. This works identically locally (via `.env`) and in GitHub Actions
 
 **Step 2 — Set the environment variable**
 
-The variable `GOOGLE_CLOUD_VISION_CREDENTIALS` must contain the full JSON content
-of the service account key (not a file path).
+`GOOGLE_CLOUD_VISION_CREDENTIALS` must contain the full JSON content of the
+service account key (not a file path).
 
 For local development, create a `.env` file in the project root (already
 gitignored — never commit this):
@@ -34,8 +45,7 @@ gitignored — never commit this):
 GOOGLE_CLOUD_VISION_CREDENTIALS={"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}
 ```
 
-The tests load this automatically via `dotenv`. If the variable is absent, all
-E2E tests are skipped — they will never block `npm test`.
+The e2e tests load this automatically via `dotenv`.
 
 For GitHub Actions, add the same JSON string as a repository secret named
 `GOOGLE_CLOUD_VISION_CREDENTIALS` (see CI configuration below).
@@ -60,15 +70,19 @@ tests/e2e/google-vision-ocr-engine.e2e.ts
 ```
 
 Reads `GOOGLE_CLOUD_VISION_CREDENTIALS`, parses it as JSON, and passes it to
-`GoogleVisionOcrEngine` as the `credentials` option. All tests are wrapped in
-`describe.skipIf(!hasCredentials)`.
+`GoogleVisionOcrEngine` as the `credentials` option:
 
 ```typescript
-const credentialsJson = process.env.GOOGLE_CLOUD_VISION_CREDENTIALS;
-const hasCredentials = !!credentialsJson;
-const credentials = hasCredentials ? JSON.parse(credentialsJson!) : undefined;
+import 'dotenv/config';
+import { GoogleVisionOcrEngine } from '../../src/adapters/google-vision-ocr-engine';
+
+const credentials = JSON.parse(process.env.GOOGLE_CLOUD_VISION_CREDENTIALS!);
 const engine = new GoogleVisionOcrEngine({ credentials });
 ```
+
+If `GOOGLE_CLOUD_VISION_CREDENTIALS` is missing, the test file throws at load
+time with a clear message. This is intentional — `npm run test:e2e` is always
+a deliberate act that requires credentials to be configured.
 
 ---
 
@@ -115,15 +129,15 @@ throwing, returning a well-defined empty result.
 **Why:** Verifies the error mapping path for authentication failure — the
 single error scenario that can be deterministically triggered against the live API.
 
-**Setup:** Construct engine with deliberately bad credentials:
+**Setup:** Construct a separate engine instance with deliberately bad credentials:
 ```typescript
-new GoogleVisionOcrEngine({
+const badEngine = new GoogleVisionOcrEngine({
   credentials: { client_email: 'bad@fake.iam', private_key: 'not-a-key' }
-})
+});
 ```
 
 **Steps:**
-1. Call `engine.extractText(Buffer.from('any'))`
+1. Call `badEngine.extractText(Buffer.from('any'))`
 
 **Assertions:**
 - Throws `OcrAuthenticationError`
@@ -166,22 +180,18 @@ a stubbed Vision client. See `high-level-design.md` cycles 8, 9, 11.
 ## Running the tests
 
 ```bash
-# Skip E2E tests (default — no credentials required)
+# Regular test suite — never uses real credentials, always uses MockOcrEngine
 npm test
 
-# Run E2E tests locally (reads GOOGLE_CLOUD_VISION_CREDENTIALS from .env)
-npx vitest run tests/e2e/google-vision-ocr-engine.e2e.ts
-
-# Run E2E tests with credentials set inline
-GOOGLE_CLOUD_VISION_CREDENTIALS='{"type":"service_account",...}' \
-  npx vitest run tests/e2e/google-vision-ocr-engine.e2e.ts
+# E2E suite — requires GOOGLE_CLOUD_VISION_CREDENTIALS in .env or environment
+npm run test:e2e
 ```
 
 ---
 
 ## CI configuration
 
-Add a GitHub Actions workflow that runs on demand (or on a schedule). The
+Add a GitHub Actions workflow that runs on demand or on a schedule. The
 service account JSON is stored as a repository secret.
 
 ```yaml
@@ -202,7 +212,7 @@ jobs:
         with:
           node-version: '20'
       - run: npm ci
-      - run: npx vitest run tests/e2e/google-vision-ocr-engine.e2e.ts
+      - run: npm run test:e2e
         env:
           GOOGLE_CLOUD_VISION_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_VISION_CREDENTIALS }}
 ```
