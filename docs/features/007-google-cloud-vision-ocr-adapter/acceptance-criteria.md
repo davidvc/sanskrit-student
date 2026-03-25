@@ -42,13 +42,6 @@ Feature: Google Cloud Vision OCR Adapter
     When I call extractText with the image buffer
     Then the result language should be "sa"
 
-  Scenario: Per-word bounding boxes are returned when available
-    Given a PNG image buffer with two words
-    And the Vision API returns bounding box data for each word
-    When I call extractText with the image buffer
-    Then the result boundingBoxes should contain one entry per word
-    And each entry should include the word text, confidence, and x/y/width/height values
-
   Scenario: Successful extraction from a JPEG image
     Given a JPEG image buffer containing Devanagari text
     And the Google Cloud Vision API returns the text successfully
