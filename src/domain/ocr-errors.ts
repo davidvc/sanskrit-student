@@ -2,11 +2,13 @@
  * Base error for all OCR adapter failures.
  *
  * Wraps underlying vendor errors so callers depend only on domain types.
+ * Subclasses pass their name to the base constructor to avoid repeating
+ * the `this.name = '...'` assignment in every class.
  */
 export class OcrError extends Error {
-  constructor(message: string, options?: ErrorOptions) {
+  constructor(message: string, name = 'OcrError', options?: ErrorOptions) {
     super(message, options);
-    this.name = 'OcrError';
+    this.name = name;
   }
 }
 
@@ -17,8 +19,7 @@ export class OcrError extends Error {
  */
 export class OcrAuthenticationError extends OcrError {
   constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = 'OcrAuthenticationError';
+    super(message, 'OcrAuthenticationError', options);
   }
 }
 
@@ -29,8 +30,7 @@ export class OcrAuthenticationError extends OcrError {
  */
 export class OcrRateLimitError extends OcrError {
   constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = 'OcrRateLimitError';
+    super(message, 'OcrRateLimitError', options);
   }
 }
 
@@ -41,8 +41,7 @@ export class OcrRateLimitError extends OcrError {
  */
 export class OcrServiceUnavailableError extends OcrError {
   constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = 'OcrServiceUnavailableError';
+    super(message, 'OcrServiceUnavailableError', options);
   }
 }
 
@@ -53,7 +52,6 @@ export class OcrServiceUnavailableError extends OcrError {
  */
 export class OcrInvalidImageError extends OcrError {
   constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = 'OcrInvalidImageError';
+    super(message, 'OcrInvalidImageError', options);
   }
 }

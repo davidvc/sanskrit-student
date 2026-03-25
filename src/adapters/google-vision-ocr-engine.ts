@@ -31,23 +31,47 @@ interface VisionResponse {
 }
 
 /**
+ * Request payload for the Vision API documentTextDetection call.
+ */
+interface VisionRequest {
+  image: { content: string };
+  imageContext: { languageHints: string[] };
+}
+
+/**
  * Minimal contract for the Vision API client used by this adapter.
  *
  * Defined as a local interface so tests can inject stubs without
  * depending on the @google-cloud/vision package.
  */
 export interface VisionClient {
-  documentTextDetection(request: object): Promise<[VisionResponse]>;
+  documentTextDetection(request: VisionRequest): Promise<[VisionResponse]>;
+}
+
+/**
+ * Google Cloud service account credentials.
+ *
+ * Matches the shape accepted by @google-cloud/vision ImageAnnotatorClient.
+ */
+export interface GoogleCredentials {
+  client_email: string;
+  private_key: string;
+  [key: string]: unknown;
 }
 
 /**
  * Configuration options for GoogleVisionOcrEngine.
+ *
+ * Credential resolution order:
+ * 1. `credentials` — explicit service account object
+ * 2. `keyFilename` — path to a service account JSON file
+ * 3. Application Default Credentials (ADC) when neither is provided
  */
 export interface GoogleVisionOcrEngineOptions {
   /** Path to a service account key file. */
   keyFilename?: string;
-  /** Explicit credentials object. */
-  credentials?: object;
+  /** Explicit service account credentials. */
+  credentials?: GoogleCredentials;
 }
 
 /**
@@ -89,6 +113,7 @@ export class GoogleVisionOcrEngine implements OcrEngine {
    * @param options - OCR options including language hints
    * @returns Extracted text, confidence score, and detected language
    */
+  // TODO: AC7-AC11 — catch Vision API errors and map to OcrError subtypes
   async extractText(imageBuffer: Buffer, options?: OcrOptions): Promise<OcrResult> {
     const request = this.buildRequest(imageBuffer, options);
     const [response] = await this.client.documentTextDetection(request);
@@ -97,8 +122,10 @@ export class GoogleVisionOcrEngine implements OcrEngine {
 
   /**
    * Builds the Vision API request from the image buffer and options.
+   *
+   * Encodes the image as base64 and forwards language hints to imageContext.
    */
-  private buildRequest(imageBuffer: Buffer, options?: OcrOptions): object {
+  private buildRequest(imageBuffer: Buffer, options?: OcrOptions): VisionRequest {
     return {
       image: { content: imageBuffer.toString('base64') },
       imageContext: { languageHints: options?.languageHints ?? [] },
@@ -107,6 +134,9 @@ export class GoogleVisionOcrEngine implements OcrEngine {
 
   /**
    * Maps a Vision API response to the OcrResult domain type.
+   *
+   * TODO: AC3 — extract language from textAnnotations[0].locale
+   * TODO: AC6 — normalise confidence to [0.0, 1.0]
    */
   private mapResponse(response: VisionResponse): OcrResult {
     const text = response.fullTextAnnotation?.text ?? '';
