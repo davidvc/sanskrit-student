@@ -2,19 +2,23 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
-// On web, two packages deep-import react-native internals that bypass the
-// react-native → react-native-web alias, causing the __fbBatchedBridgeConfig error:
-//   react-native-gesture-handler specs → codegenNativeComponent
-//   react-native-reanimated fabricUtils → Renderer/shims/ReactFabric
-// Return empty modules for exactly those paths on web.
-const WEB_EMPTY_MODULES = new Set([
+// Native-only react-native internals that must be stubbed out on web.
+// These bypass the react-native → react-native-web alias and cause the
+// __fbBatchedBridgeConfig runtime error if bundled.
+//
+// Confirmed offenders (grep node_modules to reverify after upgrades):
+//   react-native-gesture-handler/lib/commonjs/specs/RNGestureHandler*NativeComponent.js
+//     → react-native/Libraries/Utilities/codegenNativeComponent
+//   react-native-reanimated/lib/module/reanimated2/fabricUtils.js
+//     → react-native/Libraries/Renderer/shims/ReactFabric
+const WEB_NATIVE_STUB_MODULES = new Set([
   'react-native/Libraries/Utilities/codegenNativeComponent',
   'react-native/Libraries/Renderer/shims/ReactFabric',
 ]);
 
 const _resolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  if (platform === 'web' && WEB_EMPTY_MODULES.has(moduleName)) {
+  if (platform === 'web' && WEB_NATIVE_STUB_MODULES.has(moduleName)) {
     return { type: 'empty' };
   }
   if (_resolveRequest) {
