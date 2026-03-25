@@ -1,4 +1,5 @@
 import { ImageAnnotatorClient } from '@google-cloud/vision';
+import { GoogleAuth, type AuthClient } from 'google-auth-library';
 import { OcrEngine, OcrResult, OcrOptions } from '../domain/ocr-engine';
 import {
   OcrError,
@@ -79,11 +80,14 @@ export interface GoogleCredentials {
  * Configuration options for GoogleVisionOcrEngine.
  *
  * Credential resolution order:
- * 1. `credentials` — explicit service account object
- * 2. `keyFilename` — path to a service account JSON file
- * 3. Application Default Credentials (ADC) when neither is provided
+ * 1. `authClient` — pre-built auth client (e.g. from createVercelGcpAuthClient)
+ * 2. `credentials` — explicit service account object
+ * 3. `keyFilename` — path to a service account JSON file
+ * 4. Application Default Credentials (ADC) when none of the above are provided
  */
 export interface GoogleVisionOcrEngineOptions {
+  /** Pre-built auth client; takes precedence over all other credential options. */
+  authClient?: AuthClient;
   /** Path to a service account key file. */
   keyFilename?: string;
   /** Explicit service account credentials. */
@@ -116,7 +120,13 @@ export class GoogleVisionOcrEngine implements OcrEngine {
    * Uses ADC when no credentials are provided (recommended for production).
    */
   private createVisionClient(options: GoogleVisionOcrEngineOptions): VisionClient {
-    return new ImageAnnotatorClient(options) as unknown as VisionClient;
+    const { authClient, ...rest } = options;
+    if (authClient) {
+      const auth = new GoogleAuth({ authClient });
+      return new ImageAnnotatorClient({ auth }) as unknown as VisionClient;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return new ImageAnnotatorClient(rest as any) as unknown as VisionClient;
   }
 
   /**
