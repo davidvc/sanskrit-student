@@ -1,15 +1,12 @@
 {
   "buildCommand": "npm run build && cd app && npm install && npm run codegen && npx expo export -p web",
+  "devCommand": "cd app && BROWSER=none npx expo start --web --port $PORT",
   "outputDirectory": "app/dist",
   "framework": null,
   "rewrites": [
     {
       "source": "/graphql",
       "destination": "/api/graphql"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/app/$1"
     }
   ],
   "env": {
