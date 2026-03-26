@@ -11,7 +11,7 @@ interface TranslationData {
     word: string;
     meanings: string[];
   }>;
-  alternativeTranslations?: string[];
+  alternativeTranslations?: string[] | null;
 }
 
 interface TranslationResultProps {
