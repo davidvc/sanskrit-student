@@ -2,7 +2,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { MockedProvider } from '@apollo/client/testing';
 import Camera from '../../../app/camera';
-import { TranslateSutraFromImageDocument } from '../../../lib/graphql/generated';
+import { TranslateSutraFromImageDocument } from '@sanskrit-student/shared';
 
 // Mock expo-camera
 const mockTakePictureAsync = jest.fn();

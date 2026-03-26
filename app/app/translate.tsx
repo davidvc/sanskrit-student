@@ -1,7 +1,7 @@
 import { useReducer } from 'react';
 import { Text, ScrollView, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { useTranslateSutraQuery } from '../lib/graphql/generated';
+import { useTranslateSutraQuery } from '@sanskrit-student/shared';
 import SutraInput from '../components/translation/SutraInput';
 import TranslationResult from '../components/translation/TranslationResult';
 

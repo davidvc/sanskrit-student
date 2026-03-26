@@ -7,11 +7,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "pretest": "npm run codegen",
     "test": "jest",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit",
-    "codegen": "graphql-codegen --config codegen.yml"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@apollo/client": "^3.8.8",
@@ -32,7 +30,8 @@
     "react-native-reanimated": "~3.6.2",
     "react-native-safe-area-context": "4.8.2",
     "react-native-screens": "~3.29.0",
-    "react-native-web": "~0.19.6"
+    "react-native-web": "~0.19.6",
+    "@sanskrit-student/shared": "file:../packages/shared"
   },
   "devDependencies": {
     "@babel/core": "^7.23.7",
@@ -61,6 +60,12 @@
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.js"
     ],
+    "moduleNameMapper": {
+      "^react$": "<rootDir>/node_modules/react",
+      "^react-dom$": "<rootDir>/node_modules/react-dom",
+      "^@apollo/client/(.*)$": "<rootDir>/node_modules/@apollo/client/$1",
+      "^@apollo/client$": "<rootDir>/node_modules/@apollo/client"
+    },
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
     ],

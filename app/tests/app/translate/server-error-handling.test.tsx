@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import { MockedProvider } from '@apollo/client/testing';
 import { GraphQLError } from 'graphql';
 import TranslateScreen from '../../../app/translate';
-import { TranslateSutraDocument } from '../../../lib/graphql/generated';
+import { TranslateSutraDocument } from '@sanskrit-student/shared';
 
 const createTranslateMock = (sutra: string, data: any) => ({
   request: {

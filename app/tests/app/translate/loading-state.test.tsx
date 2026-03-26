@@ -2,7 +2,7 @@ import { describe, it, expect } from '@jest/globals';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react-native';
 import { MockedProvider } from '@apollo/client/testing';
 import TranslateScreen from '../../../app/translate';
-import { TranslateSutraDocument } from '../../../lib/graphql/generated';
+import { TranslateSutraDocument } from '@sanskrit-student/shared';
 
 describe('Scenario: Loading state during translation', () => {
   it('displays loading indicator and disables button during translation', async () => {

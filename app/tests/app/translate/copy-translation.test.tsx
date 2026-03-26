@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import { MockedProvider } from '@apollo/client/testing';
 import * as Clipboard from 'expo-clipboard';
 import TranslateScreen from '../../../app/translate';
-import { TranslateSutraDocument } from '../../../lib/graphql/generated';
+import { TranslateSutraDocument } from '@sanskrit-student/shared';
 
 // Mock expo-clipboard
 jest.mock('expo-clipboard', () => ({

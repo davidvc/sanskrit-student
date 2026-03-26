@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useTranslateSutraFromImageMutation } from '../lib/graphql/generated';
+import { useTranslateSutraFromImageMutation } from '@sanskrit-student/shared';
 
 type ProgressState = 'idle' | 'uploading' | 'ocr' | 'translating' | 'complete';
 

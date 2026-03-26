@@ -2,7 +2,7 @@ import { describe, it, expect } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { MockedProvider } from '@apollo/client/testing';
 import TranslateScreen from '../../../app/translate';
-import { TranslateSutraDocument } from '../../../lib/graphql/generated';
+import { TranslateSutraDocument } from '@sanskrit-student/shared';
 
 /**
  * AC10: Alternative translation display

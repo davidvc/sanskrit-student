@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
-import { useTranslateSutraFromImageMutation } from '../lib/graphql/generated';
+import { useTranslateSutraFromImageMutation } from '@sanskrit-student/shared';
 import { GestureHandlerRootView, PinchGestureHandler, State } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
