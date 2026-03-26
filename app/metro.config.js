@@ -49,6 +49,12 @@ const ABSOLUTE_STUB_PREFIXES = [
   'react-native/Libraries/Utilities/codegenNativeComponent',
   'react-native/Libraries/Utilities/codegenNativeCommands',
   'react-native/Libraries/Renderer/shims/',
+  // setUpErrorHandling calls ErrorUtils.setGlobalHandler, but global.ErrorUtils
+  // is only injected by the Hermes/RN runtime on device — it is absent on web.
+  // This module is pure native error wiring; stub it out so web never executes it.
+  'react-native/Libraries/Core/setUpErrorHandling',
+  // ExceptionsManager delegates to native NativeExceptionsManager; no-op on web.
+  'react-native/Libraries/Core/ExceptionsManager',
 ];
 
 // TurboModuleRegistry needs a real stub (not empty) so callers can invoke .get()
