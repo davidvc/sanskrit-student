@@ -1,0 +1,6 @@
+{
+  "name": "@sanskrit-student/web",
+  "version": "0.1.0",
+  "description": "Next.js web application",
+  "private": true
+}

@@ -5,6 +5,11 @@
   "engines": {
     "node": ">=20.19.0"
   },
+  "workspaces": [
+    "packages/shared",
+    "packages/web",
+    "packages/native"
+  ],
   "scripts": {
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",

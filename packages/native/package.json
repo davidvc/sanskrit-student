@@ -1,0 +1,6 @@
+{
+  "name": "@sanskrit-student/native",
+  "version": "0.1.0",
+  "description": "Expo mobile application for iOS and Android",
+  "private": true
+}
