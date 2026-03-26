@@ -5,24 +5,3 @@ export interface CapturedPhoto {
   width?: number;
   height?: number;
 }
-
-export interface TranslationResult {
-  ocrConfidence: number;
-  extractedText: string;
-  originalText: string[];
-  iastText: string[];
-  words: Array<{ word: string; meanings: string[] }>;
-  alternativeTranslations: string[];
-  ocrWarnings?: string[];
-}
-
-export interface TranslationNavigationParams {
-  fromCamera: boolean;
-  ocrConfidence: number;
-  extractedText: string;
-  originalText: string;
-  iastText: string;
-  words: string;
-  alternativeTranslations: string;
-  ocrWarnings: string;
-}
