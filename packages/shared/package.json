@@ -2,5 +2,11 @@
   "name": "@sanskrit-student/shared",
   "version": "0.1.0",
   "description": "Shared business logic, types, and GraphQL hooks",
-  "private": true
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tsc --noEmit"
+  }
 }
