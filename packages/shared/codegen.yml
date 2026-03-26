@@ -1,0 +1,25 @@
+overwrite: true
+schema: "src/graphql/schema.graphql"
+documents: "src/graphql/**/*.graphql"
+generates:
+  ./src/graphql/generated.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-react-apollo"
+    config:
+      strictScalars: true
+      scalars:
+        DateTime: string
+        Upload: File
+      skipTypename: false
+      withHooks: true
+      withComponent: false
+      withHOC: false
+      enumsAsTypes: true
+      constEnums: true
+      futureProofEnums: true
+      dedupeFragments: true
+      inlineFragmentTypes: "combine"
+      skipDocumentsValidation: false
+      useTypeImports: true
