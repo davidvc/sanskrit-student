@@ -35,7 +35,7 @@ jest.mock('expo-camera', () => {
       const { View } = require('react-native');
       // Mock the camera ref with takePictureAsync
       React.useImperativeHandle(ref, () => ({
-        takePictureAsync: jest.fn().mockResolvedValue({
+        takePictureAsync: jest.fn<() => Promise<{ uri: string }>>().mockResolvedValue({
           uri: 'file:///mock-photo.jpg',
         }),
       }));
@@ -62,9 +62,9 @@ describe('Scenario: Show processing progress messages', () => {
     jest.clearAllMocks();
 
     // Mock fetch for file conversion
-    global.fetch = jest.fn().mockResolvedValue({
-      blob: jest.fn().mockResolvedValue(new Blob(['mock-image'], { type: 'image/jpeg' })),
-    } as any);
+    global.fetch = jest.fn<() => Promise<{ blob: () => Promise<Blob> }>>().mockResolvedValue({
+      blob: jest.fn<() => Promise<Blob>>().mockResolvedValue(new Blob(['mock-image'], { type: 'image/jpeg', lastModified: Date.now() })),
+    }) as unknown as typeof fetch;
   });
 
   it('shows "Uploading image..." when photo is submitted', async () => {

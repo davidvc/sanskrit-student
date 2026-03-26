@@ -126,7 +126,7 @@ export default function Camera() {
       // Create a mock File object from the photo URI
       const response = await fetch(photoUri);
       const blob = await response.blob();
-      const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+      const file = new File([blob], 'photo.jpg', { type: 'image/jpeg', lastModified: Date.now() });
 
       // Execute the mutation
       const result = await translateSutraFromImage({

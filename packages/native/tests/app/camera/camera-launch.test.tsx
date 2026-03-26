@@ -25,7 +25,7 @@ jest.mock('expo-camera', () => {
       const { View } = require('react-native');
 
       React.useImperativeHandle(ref, () => ({
-        takePictureAsync: jest.fn().mockResolvedValue({
+        takePictureAsync: jest.fn<() => Promise<{ uri: string; width: number; height: number }>>().mockResolvedValue({
           uri: 'file:///mock-photo.jpg',
           width: 1920,
           height: 1080,

@@ -6,5 +6,5 @@
 export async function convertPhotoToFile(uri: string): Promise<File> {
   const response = await fetch(uri);
   const blob = await response.blob();
-  return new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+  return new File([blob], 'photo.jpg', { type: 'image/jpeg', lastModified: Date.now() });
 }

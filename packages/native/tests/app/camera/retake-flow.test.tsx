@@ -4,7 +4,8 @@ import { MockedProvider } from '@apollo/client/testing';
 import Camera from '../../../app/camera';
 
 // Mock expo-camera
-const mockTakePictureAsync = jest.fn();
+type PhotoResult = { uri: string; width?: number; height?: number; base64?: string | null };
+const mockTakePictureAsync = jest.fn<() => Promise<PhotoResult>>();
 
 jest.mock('expo-camera', () => {
   const React = require('react');

@@ -5,7 +5,8 @@ import Camera from '../../../app/camera';
 import { TranslateSutraFromImageDocument } from '@sanskrit-student/shared';
 
 // Mock expo-camera
-const mockTakePictureAsync = jest.fn();
+type PhotoResult = { uri: string; width?: number; height?: number; base64?: string | null };
+const mockTakePictureAsync = jest.fn<() => Promise<PhotoResult>>();
 
 jest.mock('expo-camera', () => {
   const React = require('react');
@@ -52,13 +53,13 @@ describe('Scenario: Complete camera to translation flow', () => {
     // Mock fetch to handle photo URI conversion
     global.fetch = jest.fn((url: string) => {
       if (url.startsWith('file:///')) {
-        const blob = new Blob(['mock-image-data'], { type: 'image/jpeg' });
+        const blob = new Blob(['mock-image-data'], { type: 'image/jpeg', lastModified: Date.now() });
         return Promise.resolve({
           blob: () => Promise.resolve(blob),
         } as Response);
       }
       return Promise.reject(new Error('Unexpected fetch URL'));
-    }) as jest.Mock;
+    }) as unknown as typeof fetch;
   });
 
   it('completes full journey from camera launch to translation display', async () => {
@@ -395,7 +396,7 @@ describe('Scenario: Complete camera to translation flow', () => {
     );
 
     // AND: line structure should be preserved in originalText array (as JSON string in params)
-    const lastCall = mockPush.mock.calls[mockPush.mock.calls.length - 1][0];
+    const lastCall = mockPush.mock.calls[mockPush.mock.calls.length - 1][0] as { pathname: string; params: Record<string, string> };
     const originalText = JSON.parse(lastCall.params.originalText);
     expect(originalText).toEqual([
       'सत्यमेव',
