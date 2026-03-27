@@ -26,7 +26,7 @@ export default function HomePage() {
           href="/history"
           className="bg-slate-500 hover:bg-slate-600 text-white text-center font-semibold py-3 px-6 rounded-lg transition-colors"
         >
-          History (Coming Soon)
+          History
         </Link>
       </nav>
     </main>

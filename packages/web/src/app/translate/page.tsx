@@ -4,6 +4,7 @@ import { useEffect, useReducer } from 'react';
 import { useTranslateSutraQuery } from '@sanskrit-student/shared';
 import SutraInput from '@/components/translation/SutraInput';
 import TranslationResult from '@/components/translation/TranslationResult';
+import { saveHistoryEntry } from '@/lib/translationHistory';
 
 type TranslationState =
   | { status: 'idle'; inputText: string }
@@ -74,8 +75,13 @@ export default function TranslatePage() {
   });
 
   useEffect(() => {
-    if (!queryLoading && sutraToTranslate && data) {
+    if (!queryLoading && sutraToTranslate && data?.translateSutra) {
       dispatch({ type: 'TRANSLATION_SUCCEEDED' });
+      saveHistoryEntry({
+        sutra: sutraToTranslate,
+        iastText: data.translateSutra.iastText,
+        words: data.translateSutra.words,
+      });
     }
   }, [data, queryLoading, sutraToTranslate]);
 
