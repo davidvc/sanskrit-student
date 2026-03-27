@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the testing strategy for **all frontend features** in the Sanskrit Student application. Following project standards (AGENTS.md), we write **acceptance tests only** that test the public contract of React Native components with all external dependencies mocked.
+This document outlines the testing strategy for **the native app** (`packages/native`) in the Sanskrit Student application. Following project standards (AGENTS.md), we write **acceptance tests only** that test the public contract of React Native components with all external dependencies mocked.
 
 **For AI Agents**: See condensed quick-reference guide → [front-end-test-design-for-ai.md](./front-end-test-design-for-ai.md) (~400 lines vs ~1800 lines)
 

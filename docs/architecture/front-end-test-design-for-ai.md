@@ -4,7 +4,7 @@
 
 Full design: [front-end-test-design.md](./front-end-test-design.md)
 
-**Scope**: Use this guide for testing **any frontend feature** in the Sanskrit Student application. Examples reference the Basic Translation Frontend as a template.
+**Scope**: Use this guide for testing features in **`packages/native`** (the Expo React Native app). Examples reference the Basic Translation Frontend as a template. For the web app (`packages/web`), use standard React Testing Library patterns instead.
 
 ## Core Principles
 

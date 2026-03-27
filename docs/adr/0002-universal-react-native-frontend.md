@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by [ADR-0004: Split Web and Native Apps](./0004-split-web-and-native-apps.md)
 
 ## Context
 

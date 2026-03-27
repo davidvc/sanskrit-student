@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (supersedes ADR-0002)
+Accepted (supersedes ADR-0002)
 
 ## Context
 

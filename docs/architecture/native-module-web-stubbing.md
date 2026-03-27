@@ -1,5 +1,7 @@
 # Native Module Web Stubbing: Problem Statement & Design Proposal
 
+> **ARCHIVED (2026-03-27):** This problem no longer exists. [ADR-0004](../adr/0004-split-web-and-native-apps.md) split the Universal React Native app into separate `packages/web` (Next.js) and `packages/native` (Expo) apps. The native app no longer targets web, so there is no web build to stub native modules for. The Metro resolver hacks, shims, and stubs described below have all been deleted.
+
 ## Problem Statement
 
 When running this React Native / Expo app on the **web platform**, the Metro bundler uses `transform.engine=hermes` (hardcoded by Expo CLI, not configurable). This means the bundle includes React Native internals that assume a native runtime environment — globals injected by Hermes (`ErrorUtils`, `TurboModuleRegistry`), native bridge infrastructure (`BatchedBridge`, `NativeModules`), and native component codegen (`codegenNativeComponent`).

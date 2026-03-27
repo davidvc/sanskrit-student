@@ -6,9 +6,9 @@ This guide explains how to deploy the Sanskrit Student app (both backend and fro
 
 Vercel hosts:
 - **Backend**: GraphQL server running as a serverless function at `/graphql`
-- **Frontend**: React Native Web build served as static files
+- **Frontend**: Next.js web app (`packages/web`) served via Vercel's native Next.js support
 
-After deployment, you get a single URL (e.g., `https://sanskrit-student.vercel.app`) that works on any device without needing Expo Go or native app installation.
+After deployment, you get a single URL (e.g., `https://sanskrit-student.vercel.app`) that works in any browser.
 
 **Related**: See [ADR 0003: Vercel Hosting Platform](./adr/0003-vercel-hosting.md) for the architectural decision.
 
@@ -32,22 +32,13 @@ Create `vercel.json` in the project root:
 
 ```json
 {
-  "buildCommand": "npm install && npm run build && cd app && npm install && npm run codegen && npx expo export -p web",
-  "outputDirectory": "app/dist",
-  "framework": null,
-  "functions": {
-    "api/graphql.js": {
-      "runtime": "nodejs20.x"
-    }
-  },
+  "buildCommand": "npm run build && cd packages/shared && npm run build && cd ../web && npm run build",
+  "outputDirectory": "packages/web/.next",
+  "framework": "nextjs",
   "rewrites": [
     {
       "source": "/graphql",
       "destination": "/api/graphql"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/app/$1"
     }
   ],
   "env": {
@@ -57,10 +48,10 @@ Create `vercel.json` in the project root:
 ```
 
 **What this does:**
-- `buildCommand`: Builds both backend and frontend
-- `outputDirectory`: Where the frontend static files are output
-- `functions`: Configures the GraphQL serverless function
-- `rewrites`: Routes `/graphql` to the backend, everything else to the frontend
+- `buildCommand`: Compiles root TypeScript (for `api/graphql.js`), then builds `packages/shared`, then Next.js
+- `outputDirectory`: Next.js build output in `packages/web/.next`
+- `framework`: Enables Vercel's native Next.js support
+- `rewrites`: Routes `/graphql` to the GraphQL serverless function
 
 ### 3. Create Serverless Function for GraphQL
 
