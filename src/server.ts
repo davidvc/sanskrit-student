@@ -15,6 +15,9 @@ import { ImageValidatorFactory } from './adapters/image-validator-factory';
 import { GoogleVisionOcrEngine } from './adapters/google-vision-ocr-engine';
 import { GcpAuthClientProvider } from './adapters/gcp-auth-client-provider';
 import { InMemoryImageStorage } from './adapters/in-memory-image-storage';
+import { Logger } from './domain/logger';
+import { PinoLoggerFactory } from './adapters/pino-logger-factory';
+import { createErrorLoggingPlugin } from './adapters/error-logging-plugin';
 
 /**
  * Configuration options for creating the GraphQL server.
@@ -25,6 +28,9 @@ export interface ServerConfig {
 
   /** Optional: OCR translation service for image uploads */
   ocrTranslationService?: OcrTranslationService;
+
+  /** Logger for structured server-side error logging */
+  logger: Logger;
 }
 
 /**
@@ -45,6 +51,7 @@ export interface ServerDependencies {
   ocrEngine: OcrEngine;
   imageStorage: ImageStorageStrategy;
   imageValidator: ImageValidator;
+  logger: Logger;
 }
 
 /**
@@ -77,6 +84,10 @@ export class ServerConfigFactory {
     if (!deps.imageValidator) {
       throw new Error('imageValidator dependency is required but was not provided');
     }
+
+    if (!deps.logger) {
+      throw new Error('logger dependency is required but was not provided');
+    }
   }
 
   /**
@@ -101,7 +112,7 @@ export class ServerConfigFactory {
       deps.imageValidator
     );
 
-    return { translationService, ocrTranslationService };
+    return { translationService, ocrTranslationService, logger: deps.logger };
   }
 }
 
@@ -127,13 +138,17 @@ export function createConfig(deps: ServerDependencies): ServerConfig {
  * @param authProvider - Strategy for obtaining a GCP auth client
  * @returns Complete server configuration with all services (translation and OCR)
  */
-export async function createProductionConfig(authProvider: GcpAuthClientProvider): Promise<ServerConfig> {
+export async function createProductionConfig(
+  authProvider: GcpAuthClientProvider,
+  logger: Logger = PinoLoggerFactory.create()
+): Promise<ServerConfig> {
   const authClient = await authProvider.createAuthClient();
   const deps: ServerDependencies = {
     llmClient: new ClaudeLlmClient(),
     ocrEngine: new GoogleVisionOcrEngine(authClient ? { authClient } : {}),
     imageStorage: new InMemoryImageStorage(),
     imageValidator: ImageValidatorFactory.createComposite(),
+    logger,
   };
   return createConfig(deps);
 }
@@ -145,7 +160,7 @@ export async function createProductionConfig(authProvider: GcpAuthClientProvider
  * @returns The configured GraphQL yoga server instance
  */
 export function createServer(config: ServerConfig) {
-  const { translationService, ocrTranslationService } = config;
+  const { translationService, ocrTranslationService, logger } = config;
 
   const schema = createSchema({
     typeDefs: /* GraphQL */ `
@@ -200,6 +215,7 @@ export function createServer(config: ServerConfig) {
 
   return createYoga({
     schema,
+    plugins: [createErrorLoggingPlugin(logger)],
     maskedErrors: false, // Expose error messages to clients
   });
 }

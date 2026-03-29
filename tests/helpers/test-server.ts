@@ -5,6 +5,7 @@ import { InMemoryImageStorage } from '../../src/adapters/in-memory-image-storage
 import { ImageValidatorFactory } from '../../src/adapters/image-validator-factory';
 import { ImageValidator } from '../../src/domain/image-validator';
 import { OcrEngine } from '../../src/domain/ocr-engine';
+import { SpyLogger } from './spy-logger';
 
 /**
  * Test-specific dependencies that can be configured by tests.
@@ -40,6 +41,7 @@ export interface QueryOptions {
 export interface TestServer {
   executeQuery<T = unknown>(options: QueryOptions): Promise<GraphQLResponse<T>>;
   mocks: TestMocks;
+  spyLogger: SpyLogger;
 }
 
 /**
@@ -62,7 +64,7 @@ export interface TestServerOptions {
  * while keeping all other dependencies mocked.
  *
  * @param options - Optional overrides for specific dependencies
- * @returns Test server with mock dependencies accessible via .mocks
+ * @returns Test server with mock dependencies and spyLogger accessible
  */
 export function createTestServer(options: TestServerOptions = {}): TestServer {
   // Create all mock dependencies (composition root for tests)
@@ -73,9 +75,12 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
     imageValidator: ImageValidatorFactory.createComposite(),
   };
 
+  const spyLogger = new SpyLogger();
+
   const deps = {
     ...mocks,
     ...(options.ocrEngine ? { ocrEngine: options.ocrEngine } : {}),
+    logger: spyLogger,
   };
 
   // Wire dependencies through createConfig (same composition logic as production)
@@ -98,5 +103,6 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
       return response.json() as Promise<GraphQLResponse<T>>;
     },
     mocks,
+    spyLogger,
   };
 }

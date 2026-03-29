@@ -7,6 +7,7 @@ import { InMemoryImageStorage } from './adapters/in-memory-image-storage';
 import { ImageValidatorFactory } from './adapters/image-validator-factory';
 import { VercelGcpAuthClientProvider } from './adapters/vercel-gcp-auth';
 import { DefaultGcpAuthClientProvider } from './adapters/gcp-auth-client-provider';
+import { PinoLoggerFactory } from './adapters/pino-logger-factory';
 
 const DEFAULT_PORT = 4000;
 
@@ -14,6 +15,21 @@ const DEFAULT_PORT = 4000;
 export { createServer, createProductionConfig, createConfig, ServerDependencies };
 
 async function main() {
+  const logger = PinoLoggerFactory.create();
+
+  process.on('uncaughtException', (err) => {
+    logger.error('Uncaught exception', err);
+    process.exit(1);
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    logger.error(
+      'Unhandled promise rejection',
+      reason instanceof Error ? reason : new Error(String(reason))
+    );
+    process.exit(1);
+  });
+
   const useMock = process.argv.includes('--mock') || !process.env.ANTHROPIC_API_KEY;
 
   let config;
@@ -24,13 +40,14 @@ async function main() {
       ocrEngine: new MockOcrEngine(),
       imageStorage: new InMemoryImageStorage(),
       imageValidator: ImageValidatorFactory.createComposite(),
+      logger,
     };
     config = createConfig(deps);
   } else {
     const authProvider = process.env.VERCEL
       ? new VercelGcpAuthClientProvider()
       : new DefaultGcpAuthClientProvider();
-    config = await createProductionConfig(authProvider);
+    config = await createProductionConfig(authProvider, logger);
   }
 
   const yoga = createServer(config);

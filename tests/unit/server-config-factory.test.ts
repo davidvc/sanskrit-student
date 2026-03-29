@@ -4,6 +4,7 @@ import { MockLlmClient } from '../../src/adapters/mock-llm-client';
 import { MockOcrEngine } from '../../src/adapters/mock-ocr-engine';
 import { InMemoryImageStorage } from '../../src/adapters/in-memory-image-storage';
 import { ImageValidatorFactory } from '../../src/adapters/image-validator-factory';
+import { SpyLogger } from '../helpers/spy-logger';
 
 /**
  * ServerConfigFactory validation tests.
@@ -66,6 +67,7 @@ describe('ServerConfigFactory', () => {
         ocrEngine: new MockOcrEngine(),
         imageStorage: new InMemoryImageStorage(),
         imageValidator: ImageValidatorFactory.createComposite(),
+        logger: new SpyLogger(),
       });
 
       expect(config).toBeDefined();

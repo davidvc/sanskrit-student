@@ -17,6 +17,7 @@ export class MockOcrEngine implements OcrEngine {
     language: 'sa',
   };
   private currentFilename?: string;
+  private errorToThrow?: Error;
 
   constructor() {
     // Initialize filename-based responses for common test scenarios
@@ -117,13 +118,34 @@ export class MockOcrEngine implements OcrEngine {
   }
 
   /**
+   * Configure the engine to throw on the next (and all subsequent) calls.
+   *
+   * @param error - Error to throw when extractText is called
+   */
+  setError(error: Error): void {
+    this.errorToThrow = error;
+  }
+
+  /**
+   * Clear any previously configured error, reverting to normal response behaviour.
+   */
+  clearError(): void {
+    this.errorToThrow = undefined;
+  }
+
+  /**
    * Extract text - returns mocked response based on context.
    *
    * Response selection priority:
-   * 1. Filename-based response (if currentFilename matches)
-   * 2. Default response
+   * 1. Configured error (throws immediately)
+   * 2. Filename-based response (if currentFilename matches)
+   * 3. Default response
    */
   async extractText(imageBuffer: Buffer, options?: OcrOptions): Promise<OcrResult> {
+    if (this.errorToThrow) {
+      throw this.errorToThrow;
+    }
+
     // Check for filename-based response
     if (this.currentFilename && this.filenameResponses.has(this.currentFilename)) {
       return this.filenameResponses.get(this.currentFilename)!;
