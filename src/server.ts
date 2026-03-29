@@ -1,4 +1,5 @@
 import { createSchema, createYoga } from 'graphql-yoga';
+import { FileUpload } from './domain/image-storage-strategy';
 import { TranslationService } from './domain/translation-service';
 import { LlmTranslationService } from './adapters/llm-translation-service';
 import { NormalizingTranslationService } from './adapters/normalizing-translation-service';
@@ -154,6 +155,23 @@ export async function createProductionConfig(
 }
 
 /**
+ * Converts a Web API File (from multipart upload) to the domain FileUpload format.
+ * Falls through to the original value if it is already a FileUpload plain object.
+ */
+async function toFileUpload(image: unknown): Promise<FileUpload> {
+  if (image && typeof (image as File).arrayBuffer === 'function' && 'type' in (image as File)) {
+    const file = image as File;
+    return {
+      filename: file.name,
+      mimetype: file.type,
+      encoding: 'binary',
+      _buffer: Buffer.from(await file.arrayBuffer()),
+    };
+  }
+  return image as FileUpload;
+}
+
+/**
  * Creates the GraphQL yoga server with the Sanskrit translation schema.
  *
  * @param config - Server configuration with injected dependencies
@@ -203,11 +221,12 @@ export function createServer(config: ServerConfig) {
         },
       },
       Mutation: {
-        translateSutraFromImage: async (_parent: unknown, args: { image: any }) => {
+        translateSutraFromImage: async (_parent: unknown, args: { image: unknown }) => {
           if (!ocrTranslationService) {
             throw new Error('OCR translation service not configured');
           }
-          return ocrTranslationService.translateFromImage(args.image);
+          const upload = await toFileUpload(args.image);
+          return ocrTranslationService.translateFromImage(upload);
         },
       },
     },
