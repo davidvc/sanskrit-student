@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { createUploadLink } = require('apollo-upload-client/createUploadLink.mjs');
+const createUploadLink = require('apollo-upload-client/createUploadLink.mjs').default;
 import { ApolloClient, InMemoryCache } from '@apollo/experimental-nextjs-app-support';
 
 const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_URL ?? 'http://localhost:4000/graphql';
