@@ -81,10 +81,9 @@ export default function Camera() {
       await new Promise(resolve => setTimeout(resolve, 100));
       setProgressState('translating');
 
-      // Create a mock File object from the photo URI
-      const response = await fetch(photoUri);
-      const blob = await response.blob();
-      const file = new File([blob], 'photo.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+      // React Native URI-based file object — recognized by the custom isExtractableFile
+      // in apollo.ts. Using fetch+blob+File is unreliable on Android/Hermes.
+      const file = { uri: photoUri, name: 'photo.jpg', type: 'image/jpeg' };
 
       // Execute the mutation
       const result = await translateSutraFromImage({

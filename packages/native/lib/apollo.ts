@@ -3,6 +3,24 @@ import Constants from 'expo-constants';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const createUploadLink = require('apollo-upload-client/createUploadLink.mjs').default;
 
+/**
+ * Recognizes both standard Web API File/Blob instances and React Native
+ * URI-based file objects ({ uri, name, type }) as extractable files for
+ * apollo-upload-client's multipart upload.
+ */
+function isExtractableFile(value: unknown): boolean {
+  if (typeof Blob !== 'undefined' && value instanceof Blob) return true;
+  if (typeof File !== 'undefined' && value instanceof File) return true;
+  const obj = value as Record<string, unknown>;
+  return (
+    obj !== null &&
+    typeof obj === 'object' &&
+    typeof obj.uri === 'string' &&
+    typeof obj.name === 'string' &&
+    typeof obj.type === 'string'
+  );
+}
+
 // Determine the GraphQL endpoint based on environment
 const getGraphQLUri = () => {
   // In production (deployed to Vercel), use relative path on same domain
@@ -17,7 +35,7 @@ const getGraphQLUri = () => {
 };
 
 export const apolloClient = new ApolloClient({
-  link: createUploadLink({ uri: getGraphQLUri() }),
+  link: createUploadLink({ uri: getGraphQLUri(), isExtractableFile }),
   cache: new InMemoryCache({
     typePolicies: {
       Query: {

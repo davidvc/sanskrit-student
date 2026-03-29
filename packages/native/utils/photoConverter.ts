@@ -1,10 +1,14 @@
+export interface ReactNativeFileObject {
+  uri: string;
+  name: string;
+  type: string;
+}
+
 /**
- * Converts a photo URI to a File object suitable for upload
- * @param uri - The file:// URI of the photo
- * @returns A File object containing the photo data
+ * Converts a photo URI to a React Native file object suitable for upload via
+ * apollo-upload-client. Using fetch+blob+File is unreliable on Android/Hermes,
+ * so we pass the URI directly and let React Native's networking layer read it.
  */
-export async function convertPhotoToFile(uri: string): Promise<File> {
-  const response = await fetch(uri);
-  const blob = await response.blob();
-  return new File([blob], 'photo.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+export function convertPhotoToFile(uri: string): ReactNativeFileObject {
+  return { uri, name: 'photo.jpg', type: 'image/jpeg' };
 }
