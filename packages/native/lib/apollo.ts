@@ -1,5 +1,7 @@
-import { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client';
+import { ApolloClient, InMemoryCache } from '@apollo/client';
 import Constants from 'expo-constants';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const createUploadLink = require('apollo-upload-client/createUploadLink.mjs').default;
 
 // Determine the GraphQL endpoint based on environment
 const getGraphQLUri = () => {
@@ -14,12 +16,8 @@ const getGraphQLUri = () => {
   return `http://${expoHost}:4000/graphql`;
 };
 
-const httpLink = new HttpLink({
-  uri: getGraphQLUri(),
-});
-
 export const apolloClient = new ApolloClient({
-  link: httpLink,
+  link: createUploadLink({ uri: getGraphQLUri() }),
   cache: new InMemoryCache({
     typePolicies: {
       Query: {
