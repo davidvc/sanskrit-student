@@ -35,7 +35,7 @@ export class OcrTranslationService {
     try {
       // Step 1: Validate image format
       const supportedFormats = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/tiff'];
-      if (!supportedFormats.includes(upload.mimetype.toLowerCase())) {
+      if (!upload.mimetype || !supportedFormats.includes(upload.mimetype.toLowerCase())) {
         throw new Error(
           `Unsupported image format: ${upload.mimetype}. Supported formats: PNG, JPG, JPEG, WEBP, TIFF`
         );

@@ -156,7 +156,11 @@ export async function createProductionConfig(
 
 /**
  * Converts a Web API File (from multipart upload) to the domain FileUpload format.
- * Falls through to the original value if it is already a FileUpload plain object.
+ *
+ * Handles three cases:
+ * 1. Standard Web API File (has arrayBuffer + type) — desktop / iOS browsers
+ * 2. React Native Android File-like object (has name/type but no arrayBuffer) — Android
+ * 3. Already-normalised FileUpload plain object — test helpers and graphql-upload
  */
 async function toFileUpload(image: unknown): Promise<FileUpload> {
   if (image && typeof (image as File).arrayBuffer === 'function' && 'type' in (image as File)) {
@@ -168,6 +172,18 @@ async function toFileUpload(image: unknown): Promise<FileUpload> {
       _buffer: Buffer.from(await file.arrayBuffer()),
     };
   }
+
+  // Android React Native sends a File-like object with `name`/`type` instead of
+  // `filename`/`mimetype`.  Map the properties so downstream code has a valid FileUpload.
+  const obj = image as Record<string, unknown>;
+  if (obj && typeof obj.type === 'string' && !('mimetype' in obj)) {
+    return {
+      ...(image as FileUpload),
+      filename: typeof obj.name === 'string' ? obj.name : (image as FileUpload).filename,
+      mimetype: obj.type,
+    };
+  }
+
   return image as FileUpload;
 }
 
