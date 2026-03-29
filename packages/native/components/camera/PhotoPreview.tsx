@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { GestureHandlerRootView, PinchGestureHandler } from 'react-native-gesture-handler';
+import { GestureHandlerRootView, GestureDetector } from 'react-native-gesture-handler';
+import type { GestureType } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 
 interface PhotoPreviewProps {
   photoUri: string;
-  pinchHandler: any;
+  gesture: GestureType;
   animatedStyle: any;
   onRetake: () => void;
   onUsePhoto: () => void;
@@ -13,7 +14,7 @@ interface PhotoPreviewProps {
 
 export function PhotoPreview({
   photoUri,
-  pinchHandler,
+  gesture,
   animatedStyle,
   onRetake,
   onUsePhoto,
@@ -21,7 +22,7 @@ export function PhotoPreview({
   return (
     <GestureHandlerRootView style={styles.container}>
       <View style={styles.container} testID="photo-preview">
-        <PinchGestureHandler onGestureEvent={pinchHandler}>
+        <GestureDetector gesture={gesture}>
           <Animated.View style={[styles.imageContainer, animatedStyle]}>
             <Animated.Image
               source={{ uri: photoUri }}
@@ -31,7 +32,7 @@ export function PhotoPreview({
               zoomEnabled={true}
             />
           </Animated.View>
-        </PinchGestureHandler>
+        </GestureDetector>
         <View style={styles.controls}>
           <Text style={styles.prompt}>Is the text clear and in focus?</Text>
           <View style={styles.buttonContainer}>

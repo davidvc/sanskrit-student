@@ -1,15 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useTranslateSutraFromImageMutation } from '@sanskrit-student/shared';
-import { GestureHandlerRootView, PinchGestureHandler, State } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  useAnimatedGestureHandler,
-} from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ProgressState = 'idle' | 'uploading' | 'ocr' | 'translating' | 'complete';
@@ -56,35 +49,6 @@ export default function Camera() {
     };
   }, []);
 
-  // Zoom state using reanimated
-  const scale = useSharedValue(1);
-  const focalX = useSharedValue(0);
-  const focalY = useSharedValue(0);
-  const baseScale = useSharedValue(1);
-
-  const pinchHandler = useAnimatedGestureHandler({
-    onStart: (_, ctx: any) => {
-      ctx.startScale = scale.value;
-    },
-    onActive: (event, ctx) => {
-      const newScale = Math.min(Math.max(ctx.startScale * event.scale, 1), 3);
-      scale.value = newScale;
-      focalX.value = event.focalX;
-      focalY.value = event.focalY;
-    },
-    onEnd: () => {
-      baseScale.value = scale.value;
-    },
-  });
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { scale: scale.value },
-      ],
-    };
-  });
-
   const handleShutterPress = async () => {
     if (!cameraRef.current || isCapturing) return;
 
@@ -98,12 +62,6 @@ export default function Camera() {
   };
 
   const handleRetake = () => {
-    // Reset zoom state
-    scale.value = withTiming(1);
-    baseScale.value = 1;
-    focalX.value = 0;
-    focalY.value = 0;
-
     setPhotoUri(null);
     setProgressState('idle');
   };
@@ -207,19 +165,12 @@ export default function Camera() {
 
   if (photoUri) {
     return (
-      <GestureHandlerRootView style={styles.container}>
-        <View style={styles.container} testID="photo-preview">
-          <PinchGestureHandler onGestureEvent={pinchHandler}>
-            <Animated.View style={[styles.previewImageContainer, animatedStyle]}>
-              <Animated.Image
-                source={{ uri: photoUri }}
-                style={styles.previewImage}
-                testID="preview-image"
-                // @ts-ignore - custom prop for testing
-                zoomEnabled={true}
-              />
-            </Animated.View>
-          </PinchGestureHandler>
+      <View style={styles.container} testID="photo-preview">
+          <Image
+            source={{ uri: photoUri }}
+            style={styles.previewImage}
+            testID="preview-image"
+          />
           <View style={styles.previewControls}>
             <Text style={styles.qualityPrompt}>Is the text clear and in focus?</Text>
             <View style={styles.buttonContainer}>
@@ -240,7 +191,6 @@ export default function Camera() {
             </View>
           </View>
         </View>
-      </GestureHandlerRootView>
     );
   }
 
@@ -362,11 +312,6 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     backgroundColor: '#fff',
-  },
-  previewImageContainer: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
   },
   previewImage: {
     flex: 1,

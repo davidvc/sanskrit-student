@@ -1,4 +1,5 @@
 import { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client';
+import Constants from 'expo-constants';
 
 // Determine the GraphQL endpoint based on environment
 const getGraphQLUri = () => {
@@ -7,8 +8,10 @@ const getGraphQLUri = () => {
     return '/graphql';
   }
 
-  // In development, use local server
-  return 'http://localhost:4000/graphql';
+  // In development, derive host from Expo's Metro bundler host so physical
+  // devices and simulators can reach the server (localhost won't work on device).
+  const expoHost = Constants.expoConfig?.hostUri?.split(':')[0] ?? 'localhost';
+  return `http://${expoHost}:4000/graphql`;
 };
 
 const httpLink = new HttpLink({
