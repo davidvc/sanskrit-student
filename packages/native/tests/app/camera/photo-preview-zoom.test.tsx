@@ -64,12 +64,12 @@ describe('Scenario: Preview photo and verify quality', () => {
     expect(previewImage).toBeTruthy();
     expect(previewImage).toHaveProp('source', { uri: expect.any(String) });
 
-    // AND: I should see the prompt: "Is the text clear and in focus?"
-    const qualityPrompt = screen.getByText(/is the text clear and in focus/i);
+    // AND: I should see the prompt to select the region
+    const qualityPrompt = screen.getByText(/select the region to translate/i);
     expect(qualityPrompt).toBeTruthy();
   });
 
-  it('shows "Use This Photo" and "Retake" buttons in preview', async () => {
+  it('shows "Translate" and "Retake" buttons in preview', async () => {
     // GIVEN: I have captured a photo
     render(
       <MockedProvider mocks={[]}>
@@ -84,7 +84,7 @@ describe('Scenario: Preview photo and verify quality', () => {
     // Wait for preview to appear
     await screen.findByTestId('preview-image');
 
-    // THEN: I should see two buttons: "Use This Photo" and "Retake"
+    // THEN: I should see "Translate" and "Retake" buttons in preview
     const usePhotoButton = screen.getByTestId('use-photo-button');
     const retakeButton = screen.getByTestId('retake-button');
 
@@ -92,7 +92,7 @@ describe('Scenario: Preview photo and verify quality', () => {
     expect(retakeButton).toBeTruthy();
 
     // Verify button text
-    expect(usePhotoButton).toHaveTextContent(/use this photo/i);
+    expect(usePhotoButton).toHaveTextContent(/translate/i);
     expect(retakeButton).toHaveTextContent(/retake/i);
   });
 

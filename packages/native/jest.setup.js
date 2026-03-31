@@ -52,6 +52,7 @@ jest.mock('react-native-reanimated', () => {
     useSharedValue: (initial) => ({ value: initial }),
     useAnimatedStyle: () => ({}),
     useAnimatedGestureHandler: () => ({}),
+    runOnJS: (fn) => fn,
     withTiming: (value) => value,
     withSpring: (value) => value,
     Easing: {},
@@ -60,10 +61,31 @@ jest.mock('react-native-reanimated', () => {
 
 // Mock react-native-gesture-handler
 jest.mock('react-native-gesture-handler', () => {
-  const View = require('react-native').View;
+  const React = require('react');
+  const { View } = require('react-native');
+
+  const noopGesture = () => {
+    const gesture = {
+      onStart: function() { return this; },
+      onUpdate: function() { return this; },
+      onEnd: function() { return this; },
+      minDistance: function() { return this; },
+      simultaneousWithExternalGesture: function() { return this; },
+    };
+    return gesture;
+  };
+
   return {
-    GestureHandlerRootView: View,
+    GestureHandlerRootView: ({ children, ...props }) => React.createElement(View, props, children),
+    GestureDetector: ({ children }) => children,
     PinchGestureHandler: View,
+    Gesture: {
+      Pan: noopGesture,
+      Pinch: noopGesture,
+      Tap: noopGesture,
+      Simultaneous: (...gestures) => gestures[0],
+      Race: (...gestures) => gestures[0],
+    },
     State: {
       BEGAN: 0,
       FAILED: 1,
@@ -74,3 +96,9 @@ jest.mock('react-native-gesture-handler', () => {
     Directions: {},
   };
 });
+
+// Mock expo-image-manipulator (native module used for photo cropping)
+jest.mock('expo-image-manipulator', () => ({
+  manipulateAsync: jest.fn().mockResolvedValue({ uri: 'file://cropped.jpg' }),
+  SaveFormat: { JPEG: 'jpeg', PNG: 'png' },
+}));

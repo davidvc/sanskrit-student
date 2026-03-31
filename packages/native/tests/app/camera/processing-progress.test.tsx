@@ -175,14 +175,10 @@ describe('Scenario: Show processing progress messages', () => {
     const usePhotoButton = screen.getByTestId('use-photo-button');
     fireEvent.press(usePhotoButton);
 
-    // Wait for upload to complete, then OCR begins
+    // THEN: I should see "Reading Devanagari text..." during OCR
     await waitFor(() => {
-      expect(screen.queryByText(/uploading image/i)).toBeNull();
+      expect(screen.getByText(/reading devanagari text/i)).toBeTruthy();
     });
-
-    // THEN: I should see "Reading Devanagari text..."
-    const ocrMessage = screen.getByText(/reading devanagari text/i);
-    expect(ocrMessage).toBeTruthy();
   });
 
   it.skip('shows "Translating..." when translation begins', async () => { // ss-j03: disabled due to timing race condition

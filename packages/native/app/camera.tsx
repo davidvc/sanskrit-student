@@ -4,8 +4,25 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useTranslateSutraFromImageMutation } from '@sanskrit-student/shared';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CropOverlay } from '../components/camera/CropOverlay';
+import { ExpoImageCropperAdapter } from '../utils/imageCropper';
+import type { CropRegion, ImageSize } from '../utils/imageCropper';
 
 type ProgressState = 'idle' | 'uploading' | 'ocr' | 'translating' | 'complete';
+
+const imageCropper = new ExpoImageCropperAdapter();
+
+/** Computes the default crop region: centred rectangle at 80% of each dimension. */
+function defaultCropRegion(containerWidth: number, containerHeight: number): CropRegion {
+  const cropWidth = containerWidth * 0.8;
+  const cropHeight = containerHeight * 0.8;
+  return {
+    x: (containerWidth - cropWidth) / 2,
+    y: (containerHeight - cropHeight) / 2,
+    width: cropWidth,
+    height: cropHeight,
+  };
+}
 
 export default function Camera() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -13,6 +30,9 @@ export default function Camera() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [progressState, setProgressState] = useState<ProgressState>('idle');
   const [showLightingTip, setShowLightingTip] = useState(false);
+  const [cropRegion, setCropRegion] = useState<CropRegion | null>(null);
+  const [containerSize, setContainerSize] = useState<ImageSize | null>(null);
+  const [imageSize, setImageSize] = useState<ImageSize | null>(null);
   const cameraRef = useRef<any>(null);
   const lightingTipTimerRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
@@ -56,6 +76,9 @@ export default function Camera() {
     try {
       const photo = await cameraRef.current.takePictureAsync();
       setPhotoUri(photo.uri);
+      if (photo.width && photo.height) {
+        setImageSize({ width: photo.width, height: photo.height });
+      }
     } finally {
       setIsCapturing(false);
     }
@@ -63,36 +86,37 @@ export default function Camera() {
 
   const handleRetake = () => {
     setPhotoUri(null);
+    setCropRegion(null);
+    setContainerSize(null);
+    setImageSize(null);
     setProgressState('idle');
   };
 
-  const handleUsePhoto = async () => {
+  const handleTranslate = async () => {
     if (!photoUri) return;
 
     try {
-      // Start uploading
       setProgressState('uploading');
 
-      // Simulate upload completion and transition to OCR
       await new Promise(resolve => setTimeout(resolve, 100));
       setProgressState('ocr');
 
-      // Simulate OCR completion and transition to translation
       await new Promise(resolve => setTimeout(resolve, 100));
       setProgressState('translating');
 
-      // React Native URI-based file object — recognized by the custom isExtractableFile
-      // in apollo.ts. Using fetch+blob+File is unreliable on Android/Hermes.
-      const file = { uri: photoUri, name: 'photo.jpg', type: 'image/jpeg' };
+      let uploadUri = photoUri;
+      if (cropRegion && imageSize && containerSize) {
+        uploadUri = await imageCropper.crop(photoUri, cropRegion, imageSize, containerSize);
+      }
 
-      // Execute the mutation
+      const file = { uri: uploadUri, name: 'photo.jpg', type: 'image/jpeg' };
+
       const result = await translateSutraFromImage({
         variables: { image: file },
       });
 
       const data = result.data?.translateSutraFromImage;
       if (data) {
-        // Navigate to translation screen with OCR results
         router.push({
           pathname: '/translate',
           params: {
@@ -115,7 +139,6 @@ export default function Camera() {
 
   // Handle camera permission states
   if (!permission) {
-    // Permission info is loading
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#007AFF" />
@@ -125,7 +148,6 @@ export default function Camera() {
   }
 
   if (!permission.granted) {
-    // Permission not granted - show request UI
     return (
       <View style={styles.container}>
         <View style={styles.permissionContainer}>
@@ -165,31 +187,53 @@ export default function Camera() {
   if (photoUri) {
     return (
       <View style={styles.container} testID="photo-preview">
+        <View
+          style={styles.previewImageContainer}
+          testID="preview-image-container"
+          onLayout={(e) => {
+            const { width, height } = e.nativeEvent.layout;
+            setContainerSize({ width, height });
+            setCropRegion(defaultCropRegion(width, height));
+          }}
+        >
           <Image
             source={{ uri: photoUri }}
             style={styles.previewImage}
             testID="preview-image"
+            onLoad={(e) => {
+              const { width, height } = e.nativeEvent.source;
+              setImageSize({ width, height });
+            }}
           />
-          <View style={styles.previewControls}>
-            <Text style={styles.qualityPrompt}>Is the text clear and in focus?</Text>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[styles.button, styles.retakeButton]}
-                onPress={handleRetake}
-                testID="retake-button"
-              >
-                <Text style={styles.buttonText}>Retake</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.usePhotoButton]}
-                onPress={handleUsePhoto}
-                testID="use-photo-button"
-              >
-                <Text style={styles.buttonText}>Use This Photo</Text>
-              </TouchableOpacity>
-            </View>
+          {cropRegion && containerSize && (
+            <CropOverlay
+              containerWidth={containerSize.width}
+              containerHeight={containerSize.height}
+              cropRegion={cropRegion}
+              onCropChange={setCropRegion}
+            />
+          )}
+        </View>
+        <View style={styles.previewControls}>
+          <Text style={styles.qualityPrompt}>Select the region to translate</Text>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.button, styles.retakeButton]}
+              onPress={handleRetake}
+              testID="retake-button"
+            >
+              <Text style={styles.buttonText}>Retake</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.usePhotoButton]}
+              onPress={handleTranslate}
+              testID="use-photo-button"
+            >
+              <Text style={styles.buttonText}>Translate</Text>
+            </TouchableOpacity>
           </View>
         </View>
+      </View>
     );
   }
 
@@ -311,6 +355,10 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     backgroundColor: '#fff',
+  },
+  previewImageContainer: {
+    flex: 1,
+    width: '100%',
   },
   previewImage: {
     flex: 1,

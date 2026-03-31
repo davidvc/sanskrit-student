@@ -123,8 +123,8 @@ describe('Scenario: Complete camera to translation flow', () => {
       expect(previewImage).toBeTruthy();
     });
 
-    // AND: I should see quality verification prompt
-    const qualityPrompt = screen.getByText(/is the text clear and in focus/i);
+    // AND: I should see the region selection prompt
+    const qualityPrompt = screen.getByText(/select the region to translate/i);
     expect(qualityPrompt).toBeTruthy();
 
     // WHEN: I verify the photo is clear
