@@ -2,7 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MAESTRO_FLOWS="$SCRIPT_DIR/packages/native/e2e/maestro"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+MAESTRO_FLOWS="$SCRIPT_DIR"
 SERVER_PORT=4000
 SERVER_PID=""
 
@@ -28,7 +29,7 @@ echo "GCP credentials OK."
 # --- Backend server -----------------------------------------------------------
 
 echo "Starting backend server on port $SERVER_PORT..."
-npm --prefix "$SCRIPT_DIR" run dev &>/tmp/sanskrit-backend.log &
+npm --prefix "$PROJECT_ROOT" run dev &>/tmp/sanskrit-backend.log &
 SERVER_PID=$!
 
 echo "Waiting for backend to be ready..."
