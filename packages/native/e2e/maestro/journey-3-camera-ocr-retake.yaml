@@ -1,0 +1,46 @@
+appId: com.sanskritstudent.app
+---
+# Journey 3: Camera OCR Translation (retake flow)
+# Prerequisites: app installed
+- launchApp:
+    clearState: true
+    permissions:
+      camera: allow
+
+# Navigate to camera screen
+- assertVisible: "Sanskrit Student"
+- tapOn: "Photograph Text (OCR)"
+
+# Wait for camera view
+- assertVisible:
+    id: "camera-view"
+    timeout: 5000
+
+# Dismiss lighting tip if shown (first run)
+- tapOn:
+    id: "dismiss-tip-button"
+    optional: true
+
+# Capture a photo to reach the preview screen
+- tapOn:
+    id: "shutter-button"
+
+# Assert photo preview appeared
+- assertVisible:
+    id: "photo-preview"
+    timeout: 5000
+
+# Tap Retake
+- tapOn:
+    id: "retake-button"
+
+# Assert app returns to live camera view with no state carried over
+- assertVisible:
+    id: "camera-view"
+    timeout: 5000
+- assertNotVisible:
+    id: "photo-preview"
+- assertNotVisible:
+    id: "use-photo-button"
+- assertNotVisible:
+    id: "retake-button"

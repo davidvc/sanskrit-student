@@ -1,0 +1,32 @@
+appId: com.sanskritstudent.app
+---
+# Journey 1: Text Translation (happy path)
+# Prerequisites: app installed, backend running
+- launchApp:
+    clearState: true
+
+# Assert home screen
+- assertVisible: "Sanskrit Student"
+- assertVisible: "Start Translating"
+
+# Navigate to translate screen
+- tapOn: "Start Translating"
+
+# Enter Sanskrit text
+- tapOn:
+    id: "sanskrit-input"
+- inputText: "नमस्ते"
+
+# Trigger translation
+- tapOn:
+    id: "translate-button"
+
+# Assert loading indicator appears
+- assertVisible: "Loading..."
+
+# Wait for and assert translation results
+- assertVisible:
+    text: "Original Text:"
+    timeout: 30000
+- assertVisible: "IAST:"
+- assertVisible: "Word Breakdown:"

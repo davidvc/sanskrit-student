@@ -1,0 +1,53 @@
+appId: com.sanskritstudent.app
+---
+# Journey 2: Camera OCR Translation (happy path)
+# Prerequisites: app installed, backend running
+- launchApp:
+    clearState: true
+    permissions:
+      camera: allow
+
+# Assert home screen
+- assertVisible: "Sanskrit Student"
+- assertVisible: "Photograph Text (OCR)"
+
+# Navigate to camera screen
+- tapOn: "Photograph Text (OCR)"
+
+# Assert camera view is shown (permission pre-granted via launchApp)
+- assertVisible:
+    id: "camera-view"
+    timeout: 5000
+
+# Dismiss lighting tip if shown (first run)
+- tapOn:
+    id: "dismiss-tip-button"
+    optional: true
+
+# Capture a photo
+- tapOn:
+    id: "shutter-button"
+
+# Assert photo preview with crop overlay appears
+- assertVisible:
+    id: "photo-preview"
+    timeout: 5000
+- assertVisible: "Select the region to translate"
+- assertVisible:
+    id: "use-photo-button"
+
+# Tap Translate
+- tapOn:
+    id: "use-photo-button"
+
+# Assert processing progress states appear
+- assertVisible:
+    text: "Uploading image..."
+    timeout: 5000
+
+# Wait for navigation to translate screen with results
+- assertVisible:
+    text: "Original Text:"
+    timeout: 60000
+- assertVisible: "IAST:"
+- assertVisible: "Word Breakdown:"

@@ -16,6 +16,7 @@ export default function SutraInput({ value, onChangeText, onTranslate, disabled 
         value={value}
         onChangeText={onChangeText}
         multiline
+        testID="sanskrit-input"
       />
       <Pressable
         style={styles.button}
