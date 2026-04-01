@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -127,7 +127,7 @@ export function CropOverlay({
   }));
 
   return (
-    <GestureHandlerRootView style={StyleSheet.absoluteFill} testID="crop-overlay">
+    <View style={StyleSheet.absoluteFill} testID="crop-overlay">
       {/* Dark mask */}
       <View
         style={[StyleSheet.absoluteFill, styles.mask]}
@@ -155,7 +155,7 @@ export function CropOverlay({
           </GestureDetector>
         </Animated.View>
       </GestureDetector>
-    </GestureHandlerRootView>
+    </View>
   );
 }
 
