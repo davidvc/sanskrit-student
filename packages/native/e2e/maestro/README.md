@@ -20,7 +20,12 @@ End-to-end UI tests for the Sanskrit Student native app using [Maestro](https://
    npx expo run:android
    ```
 
-3. **Start the backend** (the tests run against the real backend):
+3. **Authenticate with GCP** (required for OCR in Journeys 2):
+   ```bash
+   gcloud auth application-default login
+   ```
+
+4. **Start the backend** (the tests run against the real backend):
    ```bash
    # From the project root
    npm run dev
@@ -51,6 +56,7 @@ maestro test packages/native/e2e/maestro/
 ## Notes
 
 - **Camera permission**: Journeys 2 and 3 use `permissions: { camera: allow }` in `launchApp` to pre-grant camera access, bypassing the system dialog.
-- **Backend**: Journey 1 and 2 require a running backend. Journey 3 only exercises the retake path and does not call the backend.
+- **Backend**: Journeys 1 and 2 require a running backend (`npm run dev`). Journey 3 only exercises the retake path and does not call the backend.
+- **GCP auth**: Journey 2 uses Google Vision OCR. Run `gcloud auth application-default login` before starting the backend.
 - **Test isolation**: Each flow launches the app with `clearState: true` to ensure a clean starting state.
 - **Simulator camera**: On iOS Simulator, the camera captures a simulated still image. On Android Emulator, a virtual scene is used.
