@@ -38,14 +38,14 @@ End-to-end UI tests for the Sanskrit Student native app using [Maestro](https://
 From the project root, use the helper script which handles GCP auth and starts the backend automatically:
 
 ```bash
-./packages/native/e2e/maestro/run-e2e.sh
+./packages/native/tests/e2e/maestro/run-e2e.sh
 ```
 
 ### Run a single flow manually
 ```bash
-maestro test packages/native/e2e/maestro/journey-1-text-translation.yaml
-maestro test packages/native/e2e/maestro/journey-2-camera-ocr-happy-path.yaml
-maestro test packages/native/e2e/maestro/journey-3-camera-ocr-retake.yaml
+maestro test packages/native/tests/e2e/maestro/journey-1-text-translation.yaml
+maestro test packages/native/tests/e2e/maestro/journey-2-camera-ocr-happy-path.yaml
+maestro test packages/native/tests/e2e/maestro/journey-3-camera-ocr-retake.yaml
 ```
 
 ## Flows
