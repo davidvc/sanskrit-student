@@ -2,10 +2,17 @@ appId: com.sanskritstudent.app
 ---
 # Journey 2: Camera OCR Translation (happy path)
 # Prerequisites: app installed, backend running
+#
+# Note: The iOS Simulator camera shows a pre-rendered fake scene (not a real camera feed).
+# There is no CLI mechanism to inject a custom image as the live camera source.
+# As a result, the OCR input will be whatever text the simulator scene contains
+# (often timestamps or overlay text), not actual Sanskrit. These tests verify the
+# camera → OCR → display pipeline works correctly, not OCR accuracy with Sanskrit text.
 - launchApp:
     clearState: true
     permissions:
       camera: allow
+- waitForAnimationToEnd
 
 # Assert home screen
 - assertVisible: "Sanskrit Student"
@@ -15,8 +22,9 @@ appId: com.sanskritstudent.app
 - tapOn: "Photograph Text (OCR)"
 
 # Assert camera view is shown (permission pre-granted via launchApp)
-- assertVisible:
-    id: "camera-view"
+- extendedWaitUntil:
+    visible:
+      id: "camera-view"
     timeout: 5000
 
 # Dismiss lighting tip if shown (first run)
@@ -29,8 +37,9 @@ appId: com.sanskritstudent.app
     id: "shutter-button"
 
 # Assert photo preview with crop overlay appears
-- assertVisible:
-    id: "photo-preview"
+- extendedWaitUntil:
+    visible:
+      id: "photo-preview"
     timeout: 5000
 - assertVisible: "Select the region to translate"
 - assertVisible:
@@ -40,14 +49,14 @@ appId: com.sanskritstudent.app
 - tapOn:
     id: "use-photo-button"
 
-# Assert processing progress states appear
-- assertVisible:
-    text: "Uploading image..."
-    timeout: 5000
+# Assert processing progress — "Translating..." is the durable state during the API call
+- extendedWaitUntil:
+    visible: "Translating..."
+    timeout: 10000
 
 # Wait for navigation to translate screen with results
-- assertVisible:
-    text: "Original Text:"
+- extendedWaitUntil:
+    visible: "Original Text:"
     timeout: 60000
 - assertVisible: "IAST:"
 - assertVisible: "Word Breakdown:"

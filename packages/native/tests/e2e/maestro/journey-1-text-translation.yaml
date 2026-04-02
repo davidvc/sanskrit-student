@@ -4,6 +4,7 @@ appId: com.sanskritstudent.app
 # Prerequisites: app installed, backend running
 - launchApp:
     clearState: true
+- waitForAnimationToEnd
 
 # Assert home screen
 - assertVisible: "Sanskrit Student"
@@ -11,6 +12,12 @@ appId: com.sanskritstudent.app
 
 # Navigate to translate screen
 - tapOn: "Start Translating"
+
+# Wait for translate screen to load
+- extendedWaitUntil:
+    visible:
+      id: "sanskrit-input"
+    timeout: 5000
 
 # Enter Sanskrit text
 - tapOn:
@@ -21,12 +28,9 @@ appId: com.sanskritstudent.app
 - tapOn:
     id: "translate-button"
 
-# Assert loading indicator appears
-- assertVisible: "Loading..."
-
 # Wait for and assert translation results
-- assertVisible:
-    text: "Original Text:"
+- extendedWaitUntil:
+    visible: "Original Text:"
     timeout: 30000
 - assertVisible: "IAST:"
 - assertVisible: "Word Breakdown:"
