@@ -1,9 +1,36 @@
-import { useReducer } from 'react';
+import { useReducer, useMemo } from 'react';
 import { Text, ScrollView, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import { useLocalSearchParams } from 'expo-router';
 import { useTranslateSutraQuery } from '@sanskrit-student/shared';
 import SutraInput from '../components/translation/SutraInput';
 import TranslationResult from '../components/translation/TranslationResult';
+
+type CameraResult = {
+  originalText: string[];
+  iastText: string[];
+  words: Array<{ word: string; meanings: string[] }>;
+  alternativeTranslations: string[];
+};
+
+function toJsonString(value: string | string[] | undefined): string {
+  if (typeof value === 'string') return value;
+  return JSON.stringify(value ?? []);
+}
+
+function parseCameraParams(params: Record<string, string | string[]>): CameraResult | null {
+  if (params.fromCamera !== 'true') return null;
+  try {
+    return {
+      originalText: JSON.parse(toJsonString(params.originalText)),
+      iastText: JSON.parse(toJsonString(params.iastText)),
+      words: JSON.parse(toJsonString(params.words)),
+      alternativeTranslations: JSON.parse(toJsonString(params.alternativeTranslations)),
+    };
+  } catch {
+    return null;
+  }
+}
 
 // Translation state machine
 type TranslationState =
@@ -104,6 +131,8 @@ function translationReducer(state: TranslationState, action: TranslationAction):
 }
 
 export default function Translate() {
+  const params = useLocalSearchParams();
+  const cameraResult = useMemo(() => parseCameraParams(params as Record<string, string | string[]>), [params]);
   const [state, dispatch] = useReducer(translationReducer, { status: 'idle', inputText: '' });
 
   const sutraToTranslate = state.status === 'loading' || state.status === 'success' || state.status === 'error' || state.status === 'copied'
@@ -126,10 +155,10 @@ export default function Translate() {
   };
 
   const handleCopyIast = async () => {
-    if (data?.translateSutra?.iastText) {
+    const iastText = cameraResult?.iastText ?? data?.translateSutra?.iastText;
+    if (iastText) {
       try {
-        const iastText = data.translateSutra.iastText.join('\n');
-        await Clipboard.setStringAsync(iastText);
+        await Clipboard.setStringAsync(iastText.join('\n'));
         dispatch({ type: 'COPY_SUCCEEDED' });
 
         // Auto-hide confirmation after 3 seconds
@@ -144,25 +173,28 @@ export default function Translate() {
   const showValidationError = state.status === 'validationError';
   const showServerError = state.status === 'error';
   const showCopyConfirmation = state.status === 'copied';
-  const shouldShowResults = (state.status === 'success' || state.status === 'copied') && data?.translateSutra;
+  const queryResult = (state.status === 'success' || state.status === 'copied') ? data?.translateSutra : null;
+  const resultData = cameraResult ?? queryResult ?? null;
 
   return (
     <ScrollView style={styles.container}>
-      <SutraInput
-        value={state.inputText}
-        onChangeText={(text) => dispatch({ type: 'INPUT_CHANGED', text })}
-        onTranslate={handleTranslate}
-        disabled={isLoading}
-      />
+      {!cameraResult && (
+        <SutraInput
+          value={state.inputText}
+          onChangeText={(text) => dispatch({ type: 'INPUT_CHANGED', text })}
+          onTranslate={handleTranslate}
+          disabled={isLoading}
+        />
+      )}
 
       {isLoading && <Text style={styles.loading}>Loading...</Text>}
       {showValidationError && <Text style={styles.error}>{state.error}</Text>}
       {showServerError && <Text style={styles.error}>Error: {state.error}</Text>}
       {showCopyConfirmation && <Text style={styles.success}>Copied to clipboard</Text>}
 
-      {shouldShowResults && data?.translateSutra && (
+      {resultData && (
         <TranslationResult
-          data={data.translateSutra}
+          data={resultData}
           onCopyIast={handleCopyIast}
         />
       )}
