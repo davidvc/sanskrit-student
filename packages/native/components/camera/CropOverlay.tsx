@@ -40,8 +40,10 @@ export function CropOverlay({
     [onCropChange]
   );
 
-  const clamp = (value: number, min: number, max: number) =>
-    Math.min(Math.max(value, min), max);
+  const clamp = (value: number, min: number, max: number) => {
+    'worklet';
+    return Math.min(Math.max(value, min), max);
+  };
 
   /** Pan gesture: moves the entire crop box. */
   const panGesture = Gesture.Pan()
