@@ -1,4 +1,5 @@
 import { createSchema, createYoga } from 'graphql-yoga';
+import { writeFileSync } from 'fs';
 import { FileUpload } from './domain/image-storage-strategy';
 import { TranslationService } from './domain/translation-service';
 import { LlmTranslationService } from './adapters/llm-translation-service';
@@ -242,6 +243,10 @@ export function createServer(config: ServerConfig) {
             throw new Error('OCR translation service not configured');
           }
           const upload = await toFileUpload(args.image);
+          if (process.env.DEBUG_SAVE_IMAGE && upload._buffer) {
+            const ext = upload.mimetype?.split('/')[1] ?? 'bin';
+            writeFileSync(`/tmp/debug-image-${Date.now()}.${ext}`, upload._buffer);
+          }
           return ocrTranslationService.translateFromImage(upload);
         },
       },

@@ -26,6 +26,7 @@ cleanup() {
 trap cleanup INT TERM
 
 echo "Starting GraphQL backend on http://localhost:4000/graphql ..."
+export DEBUG_SAVE_IMAGE=1
 npm run dev --prefix "$ROOT" &
 BACKEND_PID=$!
 
