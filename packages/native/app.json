@@ -34,11 +34,18 @@
       "expo-updates"
     ],
     "updates": {
-      "url": "https://u.expo.dev/placeholder-project-id"
+      "url": "https://u.expo.dev/87608b30-7950-40cd-9732-8af2add0ed96"
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
-    "scheme": "sanskrit-student"
+    "scheme": "sanskrit-student",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "87608b30-7950-40cd-9732-8af2add0ed96"
+      }
+    },
+    "owner": "dvancouvering"
   }
 }
