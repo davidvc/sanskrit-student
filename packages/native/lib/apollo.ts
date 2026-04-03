@@ -23,6 +23,11 @@ function isExtractableFile(value: unknown): boolean {
 
 // Determine the GraphQL endpoint based on environment
 const getGraphQLUri = () => {
+  // Explicit override (e.g. set via EAS environment variables for preview builds)
+  if (process.env.GRAPHQL_URL) {
+    return process.env.GRAPHQL_URL;
+  }
+
   // In production (deployed to Vercel), use relative path on same domain
   if (process.env.NODE_ENV === 'production') {
     return '/graphql';
