@@ -1,18 +1,14 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslateSutraFromImageMutation } from '@sanskrit-student/shared';
-import { ExpoImageCropperAdapter } from '../utils/imageCropper';
-import type { CapturedPhoto, CropState } from './useCameraCapture';
 
 export type OcrProgressState = 'idle' | 'processing' | 'error';
 
 export interface OcrMutationState {
   progress: OcrProgressState;
   error: string | null;
-  translate: (photo: CapturedPhoto, cropState: CropState) => Promise<void>;
+  translate: (croppedUri: string) => Promise<void>;
 }
-
-const imageCropper = new ExpoImageCropperAdapter();
 
 /** Fires the OCR/translation mutation and tracks progress state. */
 export function useOcrMutation(): OcrMutationState {
@@ -21,18 +17,12 @@ export function useOcrMutation(): OcrMutationState {
   const router = useRouter();
   const [translateSutraFromImage] = useTranslateSutraFromImageMutation();
 
-  const translate = async (photo: CapturedPhoto, cropState: CropState) => {
+  const translate = async (croppedUri: string) => {
     setProgress('processing');
     setError(null);
 
     try {
-      let uploadUri = photo.uri;
-      const { cropRegion, imageSize, containerSize } = cropState;
-      if (cropRegion && imageSize && containerSize) {
-        uploadUri = await imageCropper.crop(photo.uri, cropRegion, imageSize, containerSize);
-      }
-
-      const file = { uri: uploadUri, name: 'photo.jpg', type: 'image/jpeg' };
+      const file = { uri: croppedUri, name: 'photo.jpg', type: 'image/jpeg' };
       const result = await translateSutraFromImage({ variables: { image: file } });
 
       const data = result.data?.translateSutraFromImage;

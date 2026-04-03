@@ -119,12 +119,12 @@ describe('Scenario: Complete camera to translation flow', () => {
     // THEN: a photo should be captured
     // AND: I should see a preview
     await waitFor(() => {
-      const previewImage = screen.getByTestId('preview-image');
+      const previewImage = screen.getByTestId('photo-preview');
       expect(previewImage).toBeTruthy();
     });
 
-    // AND: I should see the region selection prompt
-    const qualityPrompt = screen.getByText(/select the region to translate/i);
+    // AND: I should see the translate prompt
+    const qualityPrompt = screen.getByText(/ready to translate/i);
     expect(qualityPrompt).toBeTruthy();
 
     // WHEN: I verify the photo is clear
@@ -167,7 +167,7 @@ describe('Scenario: Complete camera to translation flow', () => {
     fireEvent.press(shutterButton);
 
     await waitFor(() => {
-      expect(screen.getByTestId('preview-image')).toBeTruthy();
+      expect(screen.getByTestId('photo-preview')).toBeTruthy();
     });
 
     // WHEN: I notice the photo is blurry
@@ -177,7 +177,7 @@ describe('Scenario: Complete camera to translation flow', () => {
 
     // THEN: I should return to the camera view
     await waitFor(() => {
-      expect(screen.queryByTestId('preview-image')).toBeNull();
+      expect(screen.queryByTestId('photo-preview')).toBeNull();
       expect(screen.getByTestId('camera-view')).toBeTruthy();
     });
 
@@ -187,7 +187,7 @@ describe('Scenario: Complete camera to translation flow', () => {
 
     // AND: the new preview should appear
     await waitFor(() => {
-      expect(screen.getByTestId('preview-image')).toBeTruthy();
+      expect(screen.getByTestId('photo-preview')).toBeTruthy();
     });
   });
 
@@ -226,7 +226,7 @@ describe('Scenario: Complete camera to translation flow', () => {
     fireEvent.press(shutterButton);
 
     await waitFor(() => {
-      expect(screen.getByTestId('preview-image')).toBeTruthy();
+      expect(screen.getByTestId('photo-preview')).toBeTruthy();
     });
 
     const usePhotoButton = screen.getByTestId('use-photo-button');
@@ -286,7 +286,7 @@ describe('Scenario: Complete camera to translation flow', () => {
     fireEvent.press(shutterButton);
 
     await waitFor(() => {
-      expect(screen.getByTestId('preview-image')).toBeTruthy();
+      expect(screen.getByTestId('photo-preview')).toBeTruthy();
     });
 
     const usePhotoButton = screen.getByTestId('use-photo-button');
@@ -364,7 +364,7 @@ describe('Scenario: Complete camera to translation flow', () => {
     fireEvent.press(shutterButton);
 
     await waitFor(() => {
-      expect(screen.getByTestId('preview-image')).toBeTruthy();
+      expect(screen.getByTestId('photo-preview')).toBeTruthy();
     });
 
     const usePhotoButton = screen.getByTestId('use-photo-button');

@@ -1,20 +1,21 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { MockedProvider } from '@apollo/client/testing';
 import Camera from '../../../app/camera';
 import { TranslateSutraFromImageDocument } from '@sanskrit-student/shared';
 
-// Mock expo-image-manipulator — jest.mock is hoisted, so the factory runs before any
-// const declarations. Access the mock fn via require() after the mock is registered.
-jest.mock('expo-image-manipulator', () => ({
-  manipulateAsync: jest.fn(),
-  SaveFormat: { JPEG: 'jpeg', PNG: 'png' },
+// Mock react-native-image-crop-picker
+jest.mock('react-native-image-crop-picker', () => ({
+  __esModule: true,
+  default: { openCropper: jest.fn() },
 }));
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { manipulateAsync: mockManipulateAsync } = require('expo-image-manipulator') as { manipulateAsync: jest.Mock };
+const { default: mockImageCropPicker } = require('react-native-image-crop-picker') as {
+  default: { openCropper: jest.Mock }
+};
 
 // Mock expo-camera
-type PhotoResult = { uri: string; width?: number; height?: number; base64?: string | null };
+type PhotoResult = { uri: string; width?: number; height?: number };
 const mockTakePictureAsync = jest.fn<() => Promise<PhotoResult>>();
 
 jest.mock('expo-camera', () => {
@@ -37,11 +38,7 @@ jest.mock('expo-camera', () => {
 // Mock expo-router
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
-  useRouter: () => ({
-    push: mockPush,
-    replace: jest.fn(),
-    back: jest.fn(),
-  }),
+  useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }),
 }));
 
 const minimalMutationResult = {
@@ -65,97 +62,47 @@ const mutationMock = {
   delay: 200,
 };
 
-/** Fire layout event on the preview container to initialize cropRegion and containerSize. */
-async function simulateContainerLayout(containerWidth: number, containerHeight: number) {
-  await act(async () => {
-    const container = screen.getByTestId('preview-image-container');
-    fireEvent(container, 'layout', {
-      nativeEvent: { layout: { x: 0, y: 0, width: containerWidth, height: containerHeight } },
-    });
-  });
-}
-
 describe('Camera screen — crop flow', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
     mockTakePictureAsync.mockResolvedValue({ uri: 'file://photo.jpg', width: 1200, height: 1600 });
-    mockManipulateAsync.mockResolvedValue({ uri: 'file://cropped.jpg' });
+    mockImageCropPicker.openCropper.mockResolvedValue({ path: 'file://cropped.jpg' });
   });
 
-  it('uploads the cropped URI, not the original photo URI', async () => {
+  it('opens native cropper after capture and uploads the cropped URI', async () => {
     render(
       <MockedProvider mocks={[mutationMock]} addTypename={false}>
         <Camera />
       </MockedProvider>
     );
 
-    // Take a photo
     fireEvent.press(screen.getByTestId('shutter-button'));
-    await waitFor(() => expect(screen.getByTestId('preview-image')).toBeTruthy());
 
-    // Simulate container layout and image load so crop state is initialized
-    await simulateContainerLayout(300, 400);
+    // Cropper is called with the original photo URI
+    await waitFor(() =>
+      expect(mockImageCropPicker.openCropper).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'file://photo.jpg' })
+      )
+    );
 
-    // Verify crop overlay appears
-    await waitFor(() => expect(screen.getByTestId('crop-overlay')).toBeTruthy());
+    // After crop, the preview controls appear
+    await waitFor(() => expect(screen.getByTestId('photo-preview')).toBeTruthy());
 
-    // Tap Translate
+    // Tap Translate — must upload the cropped URI, not the original
     fireEvent.press(screen.getByTestId('use-photo-button'));
 
-    // manipulateAsync must be called once
-    await waitFor(() => {
-      expect(mockManipulateAsync).toHaveBeenCalledTimes(1);
-    });
-
-    // The mutation must be called with the cropped URI, not the original
     await waitFor(
-      () => {
-        expect(mockPush).toHaveBeenCalledWith(
-          expect.objectContaining({ pathname: '/translate' })
-        );
-      },
+      () => expect(mockPush).toHaveBeenCalledWith(
+        expect.objectContaining({ pathname: '/translate' })
+      ),
       { timeout: 3000 }
     );
-
-    const cropArgs = mockManipulateAsync.mock.calls[0];
-    expect(cropArgs[0]).toBe('file://photo.jpg');
-    expect(cropArgs[1]).toEqual([
-      expect.objectContaining({ crop: expect.any(Object) }),
-    ]);
   });
 
-  it('passes the correct image-space crop coordinates to manipulateAsync', async () => {
-    render(
-      <MockedProvider mocks={[mutationMock]} addTypename={false}>
-        <Camera />
-      </MockedProvider>
-    );
+  it('returns to camera viewfinder when user cancels the crop', async () => {
+    const cancelError = Object.assign(new Error('cancelled'), { code: 'E_PICKER_CANCELLED' });
+    mockImageCropPicker.openCropper.mockRejectedValue(cancelError);
 
-    fireEvent.press(screen.getByTestId('shutter-button'));
-    await waitFor(() => expect(screen.getByTestId('preview-image')).toBeTruthy());
-
-    // Container: 300×400, Image: 1200×1600 → scale 4×
-    await simulateContainerLayout(300, 400);
-
-    await waitFor(() => expect(screen.getByTestId('crop-overlay')).toBeTruthy());
-
-    fireEvent.press(screen.getByTestId('use-photo-button'));
-
-    await waitFor(() => expect(mockManipulateAsync).toHaveBeenCalledTimes(1), { timeout: 3000 });
-
-    const [, actions] = mockManipulateAsync.mock.calls[0] as [string, Array<{ crop: { originX: number; originY: number; width: number; height: number } }>];
-    const { crop } = actions[0];
-
-    // Default region is 80% centred: display x=30, y=40, w=240, h=320
-    // Scaled by 4: image x=120, y=160, w=960, h=1280
-    expect(crop.originX).toBe(120);
-    expect(crop.originY).toBe(160);
-    expect(crop.width).toBe(960);
-    expect(crop.height).toBe(1280);
-  });
-
-  it('retake clears the photo without cropping or uploading', async () => {
     render(
       <MockedProvider mocks={[]} addTypename={false}>
         <Camera />
@@ -163,24 +110,29 @@ describe('Camera screen — crop flow', () => {
     );
 
     fireEvent.press(screen.getByTestId('shutter-button'));
-    await waitFor(() => expect(screen.getByTestId('preview-image')).toBeTruthy());
 
-    await simulateContainerLayout(300, 400);
-    await waitFor(() => expect(screen.getByTestId('crop-overlay')).toBeTruthy());
+    // Camera viewfinder must remain visible (no preview)
+    await waitFor(() => expect(screen.getByTestId('camera-view')).toBeTruthy());
+    expect(screen.queryByTestId('photo-preview')).toBeNull();
+  });
 
-    // Tap Retake
+  it('retake clears the cropped photo without uploading', async () => {
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <Camera />
+      </MockedProvider>
+    );
+
+    fireEvent.press(screen.getByTestId('shutter-button'));
+    await waitFor(() => expect(screen.getByTestId('photo-preview')).toBeTruthy());
+
     fireEvent.press(screen.getByTestId('retake-button'));
 
-    // Crop overlay and preview image must be gone
     await waitFor(() => {
-      expect(screen.queryByTestId('crop-overlay')).toBeNull();
-      expect(screen.queryByTestId('preview-image')).toBeNull();
+      expect(screen.queryByTestId('photo-preview')).toBeNull();
+      expect(screen.getByTestId('camera-view')).toBeTruthy();
     });
 
-    // Camera viewfinder must be back
-    expect(screen.getByTestId('camera-view')).toBeTruthy();
-
-    // No crop or upload must have happened
-    expect(mockManipulateAsync).not.toHaveBeenCalled();
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });

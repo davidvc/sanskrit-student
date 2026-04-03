@@ -97,8 +97,10 @@ jest.mock('react-native-gesture-handler', () => {
   };
 });
 
-// Mock expo-image-manipulator (native module used for photo cropping)
-jest.mock('expo-image-manipulator', () => ({
-  manipulateAsync: jest.fn().mockResolvedValue({ uri: 'file://cropped.jpg' }),
-  SaveFormat: { JPEG: 'jpeg', PNG: 'png' },
+// Mock react-native-image-crop-picker (native module — unavailable in Jest environment)
+jest.mock('react-native-image-crop-picker', () => ({
+  __esModule: true,
+  default: {
+    openCropper: jest.fn().mockResolvedValue({ path: 'file://cropped.jpg' }),
+  },
 }));

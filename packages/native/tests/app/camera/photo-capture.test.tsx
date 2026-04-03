@@ -73,7 +73,7 @@ describe('Scenario: Capture photo with manual shutter', () => {
     });
   });
 
-  it('shows preview immediately after photo is captured', async () => {
+  it('shows preview immediately after photo is captured and cropped', async () => {
     // GIVEN: the camera is open
     render(
       <MockedProvider mocks={[]}>
@@ -85,15 +85,10 @@ describe('Scenario: Capture photo with manual shutter', () => {
     const shutterButton = screen.getByTestId('shutter-button');
     fireEvent.press(shutterButton);
 
-    // THEN: I should immediately see a preview of the captured photo
+    // THEN: I should see the preview container after capture and native crop
     await waitFor(() => {
-      const photoPreview = screen.getByTestId('photo-preview');
-      expect(photoPreview).toBeTruthy();
+      expect(screen.getByTestId('photo-preview')).toBeTruthy();
     });
-
-    // AND: the preview should show the captured image
-    const previewImage = screen.getByTestId('preview-image');
-    expect(previewImage).toHaveProp('source', { uri: 'file:///mock-photo.jpg' });
   });
 
   it('disables shutter button during capture to prevent double-tap', async () => {
@@ -114,10 +109,9 @@ describe('Scenario: Capture photo with manual shutter', () => {
       expect(shutterButton).toHaveAccessibilityState({ disabled: true });
     });
 
-    // AND: after capture completes, button state is managed by preview transition
+    // AND: after capture and crop completes, preview is shown
     await waitFor(() => {
-      const photoPreview = screen.getByTestId('photo-preview');
-      expect(photoPreview).toBeTruthy();
+      expect(screen.getByTestId('photo-preview')).toBeTruthy();
     });
   });
 });

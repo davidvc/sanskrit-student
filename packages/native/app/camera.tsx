@@ -1,11 +1,10 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useLightingTip } from '../hooks/useLightingTip';
 import { useCameraCapture } from '../hooks/useCameraCapture';
 import { useOcrMutation } from '../hooks/useOcrMutation';
 import { LightingTip } from '../components/camera/LightingTip';
 import { ProgressView } from '../components/camera/ProgressView';
-import { CropOverlay } from '../components/camera/CropOverlay';
 
 export default function Camera() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -46,35 +45,14 @@ export default function Camera() {
     return <ProgressView progressState="processing" />;
   }
 
-  if (capture.photo) {
-    const { cropState } = capture;
+  if (capture.croppedPhotoUri) {
     return (
       <View style={styles.container} testID="photo-preview">
-        <View
-          style={styles.previewImageContainer}
-          testID="preview-image-container"
-          onLayout={cropState.onContainerLayout}
-        >
-          <Image
-            source={{ uri: capture.photo.uri }}
-            style={styles.previewImage}
-            testID="preview-image"
-            onLoad={cropState.onImageLoad}
-          />
-          {cropState.cropRegion && cropState.containerSize && (
-            <CropOverlay
-              containerWidth={cropState.containerSize.width}
-              containerHeight={cropState.containerSize.height}
-              cropRegion={cropState.cropRegion}
-              onCropChange={cropState.onCropChange}
-            />
-          )}
-        </View>
         <View style={styles.previewControls}>
           {ocr.error && (
             <Text style={styles.errorText}>{ocr.error}</Text>
           )}
-          <Text style={styles.qualityPrompt}>Select the region to translate</Text>
+          <Text style={styles.qualityPrompt}>Ready to translate</Text>
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.button, styles.retakeButton]}
@@ -85,7 +63,7 @@ export default function Camera() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, styles.usePhotoButton]}
-              onPress={() => ocr.translate(capture.photo!, capture.cropState)}
+              onPress={() => ocr.translate(capture.croppedPhotoUri!)}
               testID="use-photo-button"
             >
               <Text style={styles.buttonText}>Translate</Text>
@@ -109,7 +87,7 @@ export default function Camera() {
       <LightingTip visible={lightingTip.visible} onDismiss={lightingTip.dismiss} />
       <TouchableOpacity
         style={styles.shutterButton}
-        onPress={capture.capture}
+        onPress={capture.captureAndCrop}
         disabled={capture.isCapturing}
         accessibilityState={{ disabled: capture.isCapturing }}
         testID="shutter-button"
@@ -195,15 +173,6 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     backgroundColor: '#fff',
-  },
-  previewImageContainer: {
-    flex: 1,
-    width: '100%',
-  },
-  previewImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
   },
   previewControls: {
     position: 'absolute',

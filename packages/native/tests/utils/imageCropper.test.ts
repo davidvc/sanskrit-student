@@ -1,40 +1,42 @@
-import { describe, it, expect } from '@jest/globals';
-import { toImageSpaceCrop } from '../../utils/imageCropper';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { ImageCropPickerAdapter } from '../../utils/imageCropper';
 
-describe('ExpoImageCropperAdapter coordinate conversion', () => {
-  it('scales x, y, width, height by image/display ratio', () => {
-    const result = toImageSpaceCrop(
-      { x: 30, y: 40, width: 120, height: 160 },
-      { width: 1200, height: 1600 },
-      { width: 300, height: 400 }
+jest.mock('react-native-image-crop-picker', () => ({
+  __esModule: true,
+  default: {
+    openCropper: jest.fn(),
+  },
+}));
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { default: mockImageCropPicker } = require('react-native-image-crop-picker') as {
+  default: { openCropper: jest.Mock }
+};
+
+describe('ImageCropPickerAdapter', () => {
+  const adapter = new ImageCropPickerAdapter();
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('returns the cropped image path on success', async () => {
+    mockImageCropPicker.openCropper.mockResolvedValue({ path: 'file://cropped.jpg' });
+    const result = await adapter.openAndCrop('file://photo.jpg');
+    expect(result).toBe('file://cropped.jpg');
+    expect(mockImageCropPicker.openCropper).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'file://photo.jpg' })
     );
-    expect(result).toEqual({ x: 120, y: 160, width: 480, height: 640 });
   });
 
-  it('handles non-square scale factors independently on each axis', () => {
-    const result = toImageSpaceCrop(
-      { x: 80, y: 60, width: 200, height: 150 },
-      { width: 2000, height: 900 },
-      { width: 400, height: 300 }
-    );
-    expect(result).toEqual({ x: 400, y: 180, width: 1000, height: 450 });
+  it('returns null when user cancels', async () => {
+    const cancelError = Object.assign(new Error('cancelled'), { code: 'E_PICKER_CANCELLED' });
+    mockImageCropPicker.openCropper.mockRejectedValue(cancelError);
+    const result = await adapter.openAndCrop('file://photo.jpg');
+    expect(result).toBeNull();
   });
 
-  it('maps a full-image crop to full image dimensions', () => {
-    const result = toImageSpaceCrop(
-      { x: 0, y: 0, width: 300, height: 400 },
-      { width: 1200, height: 1600 },
-      { width: 300, height: 400 }
-    );
-    expect(result).toEqual({ x: 0, y: 0, width: 1200, height: 1600 });
-  });
-
-  it('correctly maps a region at the bottom-right corner', () => {
-    const result = toImageSpaceCrop(
-      { x: 150, y: 200, width: 150, height: 200 },
-      { width: 1200, height: 1600 },
-      { width: 300, height: 400 }
-    );
-    expect(result).toEqual({ x: 600, y: 800, width: 600, height: 800 });
+  it('rethrows non-cancellation errors', async () => {
+    const error = new Error('permission denied');
+    mockImageCropPicker.openCropper.mockRejectedValue(error);
+    await expect(adapter.openAndCrop('file://photo.jpg')).rejects.toThrow('permission denied');
   });
 });

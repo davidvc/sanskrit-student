@@ -3,13 +3,18 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import { MockedProvider } from '@apollo/client/testing';
 import Camera from '../../../app/camera';
 
+jest.mock('react-native-image-crop-picker', () => ({
+  __esModule: true,
+  default: { openCropper: jest.fn() },
+}));
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { default: mockImageCropPicker } = require('react-native-image-crop-picker') as {
+  default: { openCropper: jest.Mock }
+};
+
 jest.mock('expo-camera', () => {
   const React = require('react');
   return {
-    Camera: ({ children, ...props }: any) => {
-      const { View } = require('react-native');
-      return <View testID="camera-view" {...props}>{children}</View>;
-    },
     CameraView: React.forwardRef(({ children, ...props }: any, ref: any) => {
       const { View } = require('react-native');
       React.useImperativeHandle(ref, () => ({
@@ -29,107 +34,61 @@ jest.mock('expo-camera', () => {
 });
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    back: jest.fn(),
-  }),
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
 }));
 
 describe('Scenario: Preview photo and verify quality', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockImageCropPicker.openCropper.mockResolvedValue({ path: 'file:///cropped-photo.jpg' });
   });
 
-  it('displays preview with quality verification prompt', async () => {
-    // GIVEN: I have captured a photo
+  it('displays preview with translate prompt after capture and crop', async () => {
     render(
       <MockedProvider mocks={[]}>
         <Camera />
       </MockedProvider>
     );
 
-    // WHEN: I take a photo
-    const shutterButton = screen.getByTestId('shutter-button');
-    fireEvent.press(shutterButton);
+    fireEvent.press(screen.getByTestId('shutter-button'));
 
-    // Wait for preview to appear
-    await screen.findByTestId('preview-image');
+    await screen.findByTestId('photo-preview');
 
-    // THEN: I should see the captured photo
-    const previewImage = screen.getByTestId('preview-image');
-    expect(previewImage).toBeTruthy();
-    expect(previewImage).toHaveProp('source', { uri: expect.any(String) });
-
-    // AND: I should see the prompt to select the region
-    const qualityPrompt = screen.getByText(/select the region to translate/i);
+    const qualityPrompt = screen.getByText(/ready to translate/i);
     expect(qualityPrompt).toBeTruthy();
   });
 
-  it('shows "Translate" and "Retake" buttons in preview', async () => {
-    // GIVEN: I have captured a photo
+  it('shows "Translate" and "Retake" buttons after capture and crop', async () => {
     render(
       <MockedProvider mocks={[]}>
         <Camera />
       </MockedProvider>
     );
 
-    // WHEN: I take a photo
-    const shutterButton = screen.getByTestId('shutter-button');
-    fireEvent.press(shutterButton);
+    fireEvent.press(screen.getByTestId('shutter-button'));
 
-    // Wait for preview to appear
-    await screen.findByTestId('preview-image');
+    await screen.findByTestId('photo-preview');
 
-    // THEN: I should see "Translate" and "Retake" buttons in preview
-    const usePhotoButton = screen.getByTestId('use-photo-button');
-    const retakeButton = screen.getByTestId('retake-button');
-
-    expect(usePhotoButton).toBeTruthy();
-    expect(retakeButton).toBeTruthy();
-
-    expect(usePhotoButton).toHaveTextContent(/translate/i);
-    expect(retakeButton).toHaveTextContent(/retake/i);
-  });
-
-  it('shows crop overlay on photo preview', async () => {
-    // GIVEN: I have captured a photo
-    render(
-      <MockedProvider mocks={[]}>
-        <Camera />
-      </MockedProvider>
-    );
-
-    // WHEN: I take a photo and the preview renders
-    const shutterButton = screen.getByTestId('shutter-button');
-    fireEvent.press(shutterButton);
-
-    await screen.findByTestId('preview-image');
-
-    // THEN: the preview container is present for crop interaction
-    const previewContainer = screen.getByTestId('preview-image-container');
-    expect(previewContainer).toBeTruthy();
+    expect(screen.getByTestId('use-photo-button')).toBeTruthy();
+    expect(screen.getByTestId('retake-button')).toBeTruthy();
+    expect(screen.getByTestId('use-photo-button')).toHaveTextContent(/translate/i);
+    expect(screen.getByTestId('retake-button')).toHaveTextContent(/retake/i);
   });
 
   it('returns to camera view when retake is pressed from preview', async () => {
-    // GIVEN: I have captured a photo and see the preview
     render(
       <MockedProvider mocks={[]}>
         <Camera />
       </MockedProvider>
     );
 
-    const shutterButton = screen.getByTestId('shutter-button');
-    fireEvent.press(shutterButton);
+    fireEvent.press(screen.getByTestId('shutter-button'));
+    await screen.findByTestId('photo-preview');
 
-    await screen.findByTestId('preview-image');
-
-    // WHEN: I tap Retake
     fireEvent.press(screen.getByTestId('retake-button'));
 
-    // THEN: I return to the camera view
     await waitFor(() => {
-      expect(screen.queryByTestId('preview-image')).toBeNull();
+      expect(screen.queryByTestId('photo-preview')).toBeNull();
       expect(screen.getByTestId('camera-view')).toBeTruthy();
     });
   });

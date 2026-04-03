@@ -11,17 +11,11 @@ jest.mock('expo-camera', () => {
   const React = require('react');
 
   return {
-    Camera: ({ children, ...props }: any) => {
-      const { View } = require('react-native');
-      return <View testID="camera-view" {...props}>{children}</View>;
-    },
     CameraView: React.forwardRef(({ children, ...props }: any, ref: any) => {
       const { View } = require('react-native');
-
       React.useImperativeHandle(ref, () => ({
         takePictureAsync: mockTakePictureAsync,
       }));
-
       return <View testID="camera-view" {...props}>{children}</View>;
     }),
     useCameraPermissions: jest.fn(() => [
@@ -31,13 +25,8 @@ jest.mock('expo-camera', () => {
   };
 });
 
-// Mock expo-router
 jest.mock('expo-router', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    back: jest.fn(),
-  }),
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
 }));
 
 describe('Scenario: Retake photo if quality is poor', () => {
@@ -51,177 +40,118 @@ describe('Scenario: Retake photo if quality is poor', () => {
   });
 
   it('returns to camera view when "Retake" button is tapped', async () => {
-    // GIVEN: I am viewing the photo preview
-    // AND: I notice the photo is blurry
     render(
       <MockedProvider mocks={[]}>
         <Camera />
       </MockedProvider>
     );
 
-    // First, capture a photo to enter preview state
-    const shutterButton = screen.getByTestId('shutter-button');
-    fireEvent.press(shutterButton);
+    fireEvent.press(screen.getByTestId('shutter-button'));
 
-    // Wait for preview to appear
     await waitFor(() => {
-      expect(screen.getByTestId('preview-image')).toBeTruthy();
+      expect(screen.getByTestId('photo-preview')).toBeTruthy();
     });
 
-    // WHEN: I tap the "Retake" button
-    const retakeButton = screen.getByTestId('retake-button');
-    fireEvent.press(retakeButton);
+    fireEvent.press(screen.getByTestId('retake-button'));
 
-    // THEN: I should return to the camera view
     await waitFor(() => {
-      expect(screen.queryByTestId('preview-image')).toBeNull();
+      expect(screen.queryByTestId('photo-preview')).toBeNull();
       expect(screen.getByTestId('camera-view')).toBeTruthy();
     });
   });
 
   it('preserves camera settings when returning from preview', async () => {
-    // GIVEN: I am viewing the photo preview
     render(
       <MockedProvider mocks={[]}>
         <Camera />
       </MockedProvider>
     );
 
-    // First, capture a photo to enter preview state
-    const shutterButton = screen.getByTestId('shutter-button');
-    fireEvent.press(shutterButton);
+    fireEvent.press(screen.getByTestId('shutter-button'));
 
-    // Wait for preview to appear
     await waitFor(() => {
-      expect(screen.getByTestId('preview-image')).toBeTruthy();
+      expect(screen.getByTestId('photo-preview')).toBeTruthy();
     });
 
-    // WHEN: I tap the "Retake" button
-    const retakeButton = screen.getByTestId('retake-button');
-    fireEvent.press(retakeButton);
+    fireEvent.press(screen.getByTestId('retake-button'));
 
-    // THEN: I should still see the frame overlay and guidance
     await waitFor(() => {
-      const frameOverlay = screen.getByTestId('camera-frame-overlay');
-      expect(frameOverlay).toBeTruthy();
-
-      const guidanceText = screen.getByText(/best results.*photograph 2-6 lines/i);
-      expect(guidanceText).toBeTruthy();
+      expect(screen.getByTestId('camera-frame-overlay')).toBeTruthy();
+      expect(screen.getByText(/best results.*photograph 2-6 lines/i)).toBeTruthy();
     });
   });
 
   it('does not lose session state when retaking photo', async () => {
-    // GIVEN: I am viewing the photo preview
-    // AND: I have session context (e.g., came from a specific flow)
     render(
       <MockedProvider mocks={[]}>
         <Camera />
       </MockedProvider>
     );
 
-    // First, capture a photo to enter preview state
-    const shutterButton = screen.getByTestId('shutter-button');
-    fireEvent.press(shutterButton);
+    fireEvent.press(screen.getByTestId('shutter-button'));
 
-    // Wait for preview to appear
     await waitFor(() => {
-      expect(screen.getByTestId('preview-image')).toBeTruthy();
+      expect(screen.getByTestId('photo-preview')).toBeTruthy();
     });
 
-    // WHEN: I tap the "Retake" button
-    const retakeButton = screen.getByTestId('retake-button');
-    fireEvent.press(retakeButton);
+    fireEvent.press(screen.getByTestId('retake-button'));
 
-    // THEN: my previous session should not be lost
-    // (e.g., if I came from a specific study session, that context remains)
     await waitFor(() => {
-      const cameraView = screen.getByTestId('camera-view');
-      expect(cameraView).toBeTruthy();
+      expect(screen.getByTestId('camera-view')).toBeTruthy();
     });
-
-    // Session state would be verified through context or navigation state
-    // This test documents that retake is a non-destructive operation
   });
 
   it('allows multiple retakes without degradation', async () => {
-    // GIVEN: I have taken multiple photos and retaken them
     render(
       <MockedProvider mocks={[]}>
         <Camera />
       </MockedProvider>
     );
 
-    // Simulate multiple capture and retake cycles
     for (let i = 0; i < 3; i++) {
-      // Capture photo
-      const shutterButton = screen.getByTestId('shutter-button');
-      fireEvent.press(shutterButton);
+      fireEvent.press(screen.getByTestId('shutter-button'));
 
       await waitFor(() => {
-        expect(screen.getByTestId('preview-image')).toBeTruthy();
+        expect(screen.getByTestId('photo-preview')).toBeTruthy();
       });
 
-      // Retake
-      const retakeButton = screen.getByTestId('retake-button');
-      fireEvent.press(retakeButton);
+      fireEvent.press(screen.getByTestId('retake-button'));
 
       await waitFor(() => {
-        expect(screen.queryByTestId('preview-image')).toBeNull();
+        expect(screen.queryByTestId('photo-preview')).toBeNull();
         expect(screen.getByTestId('camera-view')).toBeTruthy();
       });
     }
 
-    // THEN: camera should still function properly after multiple retakes
     const shutterButton = screen.getByTestId('shutter-button');
     expect(shutterButton).toBeTruthy();
     expect(shutterButton).not.toHaveAccessibilityState({ disabled: true });
   });
 
-  it('cleans up previous photo URI when retaking', async () => {
-    // GIVEN: I am viewing the photo preview
+  it('cleans up previous cropped photo when retaking', async () => {
     render(
       <MockedProvider mocks={[]}>
         <Camera />
       </MockedProvider>
     );
 
-    // First, capture a photo to enter preview state
-    const shutterButton = screen.getByTestId('shutter-button');
-    fireEvent.press(shutterButton);
+    fireEvent.press(screen.getByTestId('shutter-button'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('preview-image')).toBeTruthy();
+      expect(screen.getByTestId('photo-preview')).toBeTruthy();
     });
 
-    const previewImage = screen.getByTestId('preview-image');
-    const previousUri = previewImage.props.source.uri;
-    expect(previousUri).toBeTruthy();
-
-    // WHEN: I tap the "Retake" button
-    const retakeButton = screen.getByTestId('retake-button');
-    fireEvent.press(retakeButton);
-
-    // THEN: the previous photo URI should be cleaned up
-    await waitFor(() => {
-      expect(screen.queryByTestId('preview-image')).toBeNull();
-    });
-
-    // When a new photo is captured, it should have a different URI
-    // Mock a different URI for the second photo
-    mockTakePictureAsync.mockResolvedValueOnce({
-      uri: 'file:///mock-photo-2.jpg',
-      width: 1920,
-      height: 1080,
-    });
-
-    const shutterButtonAfterRetake = screen.getByTestId('shutter-button');
-    fireEvent.press(shutterButtonAfterRetake);
+    fireEvent.press(screen.getByTestId('retake-button'));
 
     await waitFor(() => {
-      const newPreviewImage = screen.getByTestId('preview-image');
-      const newUri = newPreviewImage.props.source.uri;
-      expect(newUri).not.toBe(previousUri);
-      expect(newUri).toBe('file:///mock-photo-2.jpg');
+      expect(screen.queryByTestId('photo-preview')).toBeNull();
+    });
+
+    // After retake, a new capture should show the preview again
+    fireEvent.press(screen.getByTestId('shutter-button'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('photo-preview')).toBeTruthy();
     });
   });
 });

@@ -31,7 +31,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-updates"
+      "expo-updates",
+      "react-native-image-crop-picker"
     ],
     "updates": {
       "url": "https://u.expo.dev/87608b30-7950-40cd-9732-8af2add0ed96"
