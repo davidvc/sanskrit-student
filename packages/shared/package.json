@@ -4,6 +4,7 @@
   "description": "Shared business logic, types, and GraphQL hooks",
   "private": true,
   "main": "dist/index.js",
+  "source": "src/index.ts",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
