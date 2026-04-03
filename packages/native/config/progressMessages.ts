@@ -6,6 +6,7 @@ export const PROGRESS_MESSAGES: Record<ProgressState, string> = {
   ocr: 'Reading Devanagari text...',
   translating: 'Translating...',
   complete: '',
+  processing: 'Processing...',
 };
 
 export function getProgressMessage(state: ProgressState): string {

@@ -1,143 +1,18 @@
-import { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useRouter } from 'expo-router';
-import { useTranslateSutraFromImageMutation } from '@sanskrit-student/shared';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLightingTip } from '../hooks/useLightingTip';
+import { useCameraCapture } from '../hooks/useCameraCapture';
+import { useOcrMutation } from '../hooks/useOcrMutation';
+import { LightingTip } from '../components/camera/LightingTip';
+import { ProgressView } from '../components/camera/ProgressView';
 import { CropOverlay } from '../components/camera/CropOverlay';
-import { ExpoImageCropperAdapter } from '../utils/imageCropper';
-import type { CropRegion, ImageSize } from '../utils/imageCropper';
-
-type ProgressState = 'idle' | 'uploading' | 'ocr' | 'translating' | 'complete';
-
-const imageCropper = new ExpoImageCropperAdapter();
-
-/** Computes the default crop region: centred rectangle at 80% of each dimension. */
-function defaultCropRegion(containerWidth: number, containerHeight: number): CropRegion {
-  const cropWidth = containerWidth * 0.8;
-  const cropHeight = containerHeight * 0.8;
-  return {
-    x: (containerWidth - cropWidth) / 2,
-    y: (containerHeight - cropHeight) / 2,
-    width: cropWidth,
-    height: cropHeight,
-  };
-}
 
 export default function Camera() {
   const [permission, requestPermission] = useCameraPermissions();
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [progressState, setProgressState] = useState<ProgressState>('idle');
-  const [showLightingTip, setShowLightingTip] = useState(false);
-  const [cropRegion, setCropRegion] = useState<CropRegion | null>(null);
-  const [containerSize, setContainerSize] = useState<ImageSize | null>(null);
-  const [imageSize, setImageSize] = useState<ImageSize | null>(null);
-  const cameraRef = useRef<any>(null);
-  const lightingTipTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const router = useRouter();
+  const lightingTip = useLightingTip();
+  const capture = useCameraCapture();
+  const ocr = useOcrMutation();
 
-  const [translateSutraFromImage] = useTranslateSutraFromImageMutation();
-
-  // Check first-use flag and show lighting tip if needed
-  useEffect(() => {
-    const checkFirstUse = async () => {
-      try {
-        const tipShown = await AsyncStorage.getItem('camera_lighting_tip_shown');
-        if (!tipShown) {
-          setShowLightingTip(true);
-          AsyncStorage.setItem('camera_lighting_tip_shown', 'true');
-
-          // Auto-dismiss after 3 seconds
-          lightingTipTimerRef.current = setTimeout(() => {
-            setShowLightingTip(false);
-            lightingTipTimerRef.current = null;
-          }, 3000);
-        }
-      } catch (error) {
-        console.error('Error checking first-use flag:', error);
-      }
-    };
-
-    checkFirstUse();
-
-    return () => {
-      if (lightingTipTimerRef.current) {
-        clearTimeout(lightingTipTimerRef.current);
-        lightingTipTimerRef.current = null;
-      }
-    };
-  }, []);
-
-  const handleShutterPress = async () => {
-    if (!cameraRef.current || isCapturing) return;
-
-    setIsCapturing(true);
-    try {
-      const photo = await cameraRef.current.takePictureAsync();
-      setPhotoUri(photo.uri);
-      if (photo.width && photo.height) {
-        setImageSize({ width: photo.width, height: photo.height });
-      }
-    } finally {
-      setIsCapturing(false);
-    }
-  };
-
-  const handleRetake = () => {
-    setPhotoUri(null);
-    setCropRegion(null);
-    setContainerSize(null);
-    setImageSize(null);
-    setProgressState('idle');
-  };
-
-  const handleTranslate = async () => {
-    if (!photoUri) return;
-
-    try {
-      setProgressState('uploading');
-
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setProgressState('ocr');
-
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setProgressState('translating');
-
-      let uploadUri = photoUri;
-      if (cropRegion && imageSize && containerSize) {
-        uploadUri = await imageCropper.crop(photoUri, cropRegion, imageSize, containerSize);
-      }
-
-      const file = { uri: uploadUri, name: 'photo.jpg', type: 'image/jpeg' };
-
-      const result = await translateSutraFromImage({
-        variables: { image: file },
-      });
-
-      const data = result.data?.translateSutraFromImage;
-      if (data) {
-        router.push({
-          pathname: '/translate',
-          params: {
-            fromCamera: true,
-            ocrConfidence: data.ocrConfidence,
-            extractedText: data.extractedText,
-            originalText: JSON.stringify(data.originalText),
-            iastText: JSON.stringify(data.iastText),
-            words: JSON.stringify(data.words),
-            alternativeTranslations: JSON.stringify(data.alternativeTranslations),
-            ocrWarnings: JSON.stringify(data.ocrWarnings || []),
-          },
-        });
-      }
-    } catch (error) {
-      console.error('Translation failed:', error);
-      setProgressState('idle');
-    }
-  };
-
-  // Handle camera permission states
   if (!permission) {
     return (
       <View style={styles.container}>
@@ -167,66 +42,50 @@ export default function Camera() {
     );
   }
 
-  // Show progress messages
-  if (progressState !== 'idle') {
-    const progressMessages = {
-      uploading: 'Uploading image...',
-      ocr: 'Reading Devanagari text...',
-      translating: 'Translating...',
-      complete: '',
-    };
-
-    return (
-      <View style={styles.container} testID="progress-view">
-        <ActivityIndicator size="large" color="#007AFF" testID="upload-progress-indicator" />
-        <Text style={styles.progressText}>{progressMessages[progressState]}</Text>
-      </View>
-    );
+  if (ocr.progress === 'processing') {
+    return <ProgressView progressState="processing" />;
   }
 
-  if (photoUri) {
+  if (capture.photo) {
+    const { cropState } = capture;
     return (
       <View style={styles.container} testID="photo-preview">
         <View
           style={styles.previewImageContainer}
           testID="preview-image-container"
-          onLayout={(e) => {
-            const { width, height } = e.nativeEvent.layout;
-            setContainerSize({ width, height });
-            setCropRegion(defaultCropRegion(width, height));
-          }}
+          onLayout={cropState.onContainerLayout}
         >
           <Image
-            source={{ uri: photoUri }}
+            source={{ uri: capture.photo.uri }}
             style={styles.previewImage}
             testID="preview-image"
-            onLoad={(e) => {
-              const { width, height } = e.nativeEvent.source;
-              setImageSize({ width, height });
-            }}
+            onLoad={cropState.onImageLoad}
           />
-          {cropRegion && containerSize && (
+          {cropState.cropRegion && cropState.containerSize && (
             <CropOverlay
-              containerWidth={containerSize.width}
-              containerHeight={containerSize.height}
-              cropRegion={cropRegion}
-              onCropChange={setCropRegion}
+              containerWidth={cropState.containerSize.width}
+              containerHeight={cropState.containerSize.height}
+              cropRegion={cropState.cropRegion}
+              onCropChange={cropState.onCropChange}
             />
           )}
         </View>
         <View style={styles.previewControls}>
+          {ocr.error && (
+            <Text style={styles.errorText}>{ocr.error}</Text>
+          )}
           <Text style={styles.qualityPrompt}>Select the region to translate</Text>
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.button, styles.retakeButton]}
-              onPress={handleRetake}
+              onPress={capture.retake}
               testID="retake-button"
             >
               <Text style={styles.buttonText}>Retake</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, styles.usePhotoButton]}
-              onPress={handleTranslate}
+              onPress={() => ocr.translate(capture.photo!, capture.cropState)}
               testID="use-photo-button"
             >
               <Text style={styles.buttonText}>Translate</Text>
@@ -240,38 +99,19 @@ export default function Camera() {
   return (
     <View style={styles.container}>
       <CameraView
-        ref={cameraRef}
+        ref={capture.cameraRef}
         style={styles.camera}
         testID="camera-view"
       >
         <View style={styles.frameOverlay} testID="camera-frame-overlay" />
         <Text style={styles.guidanceText}>Best results: photograph 2-6 lines</Text>
       </CameraView>
-      {showLightingTip && (
-        <View style={styles.lightingTipContainer} testID="lighting-tip-container">
-          <Text style={styles.lightingTipText}>
-            💡 Tip: Use bright, even lighting for best results
-          </Text>
-          <TouchableOpacity
-            style={styles.dismissTipButton}
-            onPress={() => {
-              if (lightingTipTimerRef.current) {
-                clearTimeout(lightingTipTimerRef.current);
-                lightingTipTimerRef.current = null;
-              }
-              setShowLightingTip(false);
-            }}
-            testID="dismiss-tip-button"
-          >
-            <Text style={styles.dismissTipButtonText}>×</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      <LightingTip visible={lightingTip.visible} onDismiss={lightingTip.dismiss} />
       <TouchableOpacity
         style={styles.shutterButton}
-        onPress={handleShutterPress}
-        disabled={isCapturing}
-        accessibilityState={{ disabled: isCapturing }}
+        onPress={capture.capture}
+        disabled={capture.isCapturing}
+        accessibilityState={{ disabled: capture.isCapturing }}
         testID="shutter-button"
       >
         <View style={styles.shutterButtonInner} />
@@ -413,36 +253,13 @@ const styles = StyleSheet.create({
     marginTop: 20,
     textAlign: 'center',
   },
-  lightingTipContainer: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 12,
-    padding: 16,
-    paddingRight: 40,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  lightingTipText: {
-    color: '#fff',
-    fontSize: 16,
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 14,
     textAlign: 'center',
-    fontWeight: '500',
-  },
-  dismissTipButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 28,
-    height: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dismissTipButtonText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: '300',
+    marginBottom: 8,
+    backgroundColor: 'rgba(255,59,48,0.15)',
+    padding: 8,
+    borderRadius: 6,
   },
 });

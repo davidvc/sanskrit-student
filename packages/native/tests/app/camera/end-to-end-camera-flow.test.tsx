@@ -132,19 +132,9 @@ describe('Scenario: Complete camera to translation flow', () => {
     const usePhotoButton = screen.getByTestId('use-photo-button');
     fireEvent.press(usePhotoButton);
 
-    // THEN: I should see "Uploading image..." progress message
+    // THEN: I should see "Processing..." progress message
     await waitFor(() => {
-      expect(screen.getByText(/uploading image/i)).toBeTruthy();
-    });
-
-    // AND: I should see "Reading Devanagari text..." when OCR begins
-    await waitFor(() => {
-      expect(screen.getByText(/reading devanagari text/i)).toBeTruthy();
-    });
-
-    // AND: I should see "Translating..." when translation begins
-    await waitFor(() => {
-      expect(screen.getByText(/translating/i)).toBeTruthy();
+      expect(screen.getByText(/processing\.\.\./i)).toBeTruthy();
     });
 
     // WHEN: all processing completes
