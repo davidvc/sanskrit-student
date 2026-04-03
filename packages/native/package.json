@@ -8,7 +8,8 @@
     "ios": "expo run:ios",
     "test": "jest",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "build:android": "eas build --platform android --profile preview"
   },
   "dependencies": {
     "@apollo/client": "^3.8.8",
