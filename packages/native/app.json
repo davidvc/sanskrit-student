@@ -30,8 +30,15 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-updates"
     ],
+    "updates": {
+      "url": "https://u.expo.dev/placeholder-project-id"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "scheme": "sanskrit-student"
   }
 }
